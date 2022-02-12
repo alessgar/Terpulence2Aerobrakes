@@ -6,9 +6,9 @@ The Software for The Terpulence II Aerobrakes Computer
 
 ## Dependencies
 
-SdFat
-Adafruit_BMP3XX
-Adafruit_ICM20948
+SdFat  
+Adafruit_BMP3XX  
+Adafruit_ICM20948  
 
 ## License
 
