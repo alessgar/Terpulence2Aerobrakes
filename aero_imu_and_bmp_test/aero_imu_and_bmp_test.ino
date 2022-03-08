@@ -131,8 +131,6 @@ void bmpOutput(){
       Serial.print(F("Rel. Altitude = "));
       Serial.print(bmp.readAltitude(SEALEVELPRESSURE_HPA) - startingHeight);
       Serial.println(F(" m"));
-    }else{
-      insertBlankValues(4);
     }
   }
 }
