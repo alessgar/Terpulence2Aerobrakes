@@ -6,19 +6,23 @@
 #include <Buzzer.h>
 #include "SdFat.h"
 #include "sdios.h"
+#include "Adafruit_FRAM_SPI.h"
 
 // Constants
 #define SEALEVELPRESSURE_HPA (1018.287) // The pressure level of the area, used to get altitude but wont affect relative alt.
 #define sd_FAT_TYPE 0                   // Used to select the storage type we want to use, 0 just means FAT16/FAT32, 1 is FAT16/FAT32, 2 is exFat, and 3 is both
 #define SPI_SPEED SD_SCK_MHZ(50)        // How fast should the SD Card writing be? Slow down to 10-20 for breadboards, otherwise 50 when soldered
-#define CS_PIN 10                       // What pin is used for CS? Used for SD Card
+#define SD_CS_PIN 10                       // What pin is used for CS? Used for SD Card
+#define FRAM_CS_PIN A4                       // What pin is used for FRAM? Used for FRAM
+
 #define GPSSerial Serial1               // Serial Port used for hardware Serial Transmission
-#define BUZZER_PIN 13                   // What pin is the buzzer inserted into?
+#define BUZZER_PIN A0                   // What pin is the buzzer inserted into?
 
 // Motor Constants
-#define MOTOR_DIRECTION_PIN 4
+#define MOTOR_DIRECTION_PIN 7
 #define MOTOR_STEP_PIN 6
-#define MOTOR_ENABLE_PIN 2
+#define MOTOR_ENABLE_PIN 5
+#define MOTOR_FAULT_PIN 4
 #define MOTOR_STEPS_PER_REVOLUTION 250
 #define MOTOR_SPEED 400                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
 #define MOTOR_MAX_DEGREES 1080.0        // Maximum actuation
@@ -34,6 +38,10 @@ Adafruit_BMP3XX bmp;
 Adafruit_ICM20948 icm;
 Adafruit_GPS GPS(&GPSSerial);
 Buzzer buzzer(BUZZER_PIN);
+Adafruit_FRAM_SPI fram = Adafruit_FRAM_SPI(FRAM_CS_PIN);
+
+uint32_t framNextLoc = 0;                  // Next open FRAM location for writing
+bool isFRAMDumped = false;               // Checked for when FRAM dump condition met
 
 float timeNow = 0.0f;                   // Used to hold current time
 float lastTimeNow = 0.0f;               // Used for delta time
@@ -64,6 +72,7 @@ String logFileName;
 bool bmpReady = false;
 bool sdReady = false;
 bool icmReady = false;
+bool framReady = false;
 
 void setup() {
   Serial.begin(115200);
@@ -159,9 +168,23 @@ void setup() {
     }
   }
 
+  // Setup FRAM Module
+  // 256KB uses fram.begin() ; 512KB uses fram.begin(3) 
+  if(fram.begin()){
+    Serial.println(F("FRAM Ready"));
+    framReady = true;
+
+    framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Temp,BMP Pressure,BMP Alt,BMP RelAlt,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,GPS Latitude,GPS Longitude,GPS Velocity,GPS Altitude,Desired Actuation,Cur Actuation"));
+  }else{
+    Serial.println(F("FRAM not found"));
+    if(!failCode){
+      failCode = 4;
+    }
+  }
+
   // Setup SD Card and log file
   logFileName.reserve(24);
-  if (sd.begin(CS_PIN, SPI_SPEED)) {
+  if (sd.begin(SD_CS_PIN, SPI_SPEED)) {
     // Find file name
     int fileNo = 1;
     bool exists = true;
@@ -173,20 +196,19 @@ void setup() {
     // Setup file with CSV header
     logFile = sd.open(logFileName, FILE_WRITE);
     if (logFile) {
-      logFile.println(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Temp,BMP Pressure,BMP Alt,BMP RelAlt,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,GPS Latitude,GPS Longitude,GPS Velocity,GPS Altitude,Desired Actuation,Cur Actuation"));
       logFile.close(); // close the file
       Serial.println("Log file created: " + logFileName);
       sdReady = true;
     }else{
       Serial.println(F("SD Card reader found, but file was unable to be created"));
       if(!failCode){
-        failCode = 4;
+        failCode = 5;
       }
     }
   }else{
     Serial.println(F("SD Card Reader NOT found! Data will not be logged!"));
     if(!failCode){
-      failCode = 4;
+      failCode = 5;
     }
   }
 
@@ -248,6 +270,12 @@ void loop() {
     }
   }*/
 
+  // Post Launch Condition - Dump FRAM to SD Card
+  if(!isFRAMDumped && (framNextLoc >= 128000)){ // 128 KB (1/2 of the 256KB capacity of lower end FRAM)
+    isFRAMDumped = true;
+    framDumpToSD();
+  }
+
   // Actuation Test - open flaps when temp is greater than 50 C
   if (bmpReady) {
     //if (!isActuating && timeNow - startTime >= 20.0f) {
@@ -280,64 +308,50 @@ void loop() {
 
 // inserts timestamp to start data row. Argument is timestamp
 void startRow(float curTime) {
-  if (sdReady) {
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      logFile.print(curTime - startTime);
+  if (framReady) {
+    framPrint(curTime - startTime);
 
-      insertBlankValuesNoClose(1);
-      if(launchTime < 0.1f){
-        logFile.print("0.00");
-      }else{
-        logFile.print(curTime - launchTime);
-      }
+    insertBlankValues(1);
+    if(launchTime < 0.1f){
+      framPrint("0.00");
+    }else{
+      framPrint(curTime - launchTime);
+    }
 
-      insertBlankValuesNoClose(1);
-      if(lastActuated < 0.1f){
-        logFile.print("0.00");
-      }else{
-        logFile.print(curTime - lastActuated);
-      }
-      
-      logFile.close(); // close the file
+    insertBlankValues(1);
+    if(lastActuated < 0.1f){
+      framPrint("0.00");
+    }else{
+      framPrint(curTime - lastActuated);
     }
   }
 }
 
 // ends the row and adds a newline
 void endRow() {
-  if (sdReady) {
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      logFile.println(); // Move to next data row
-      logFile.close();
-    }
+  if (framReady) {
+    framPrintln(); // Move to next data row
   }
 }
 
 // Adds BMP data to the CSV row
 void outputBMP() {
-  if (bmpReady && sdReady) {
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      /* Get temp, pressure, and altitude */
-      if (bmp.performReading()) {
-        insertBlankValuesNoClose(1);
-        logFile.print(bmp.temperature);
+  if (bmpReady && framReady) {
+    /* Get temp, pressure, and altitude */
+    if (bmp.performReading()) {
+      insertBlankValues(1);
+      framPrint(bmp.temperature);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(bmp.pressure / 100.0);
+      insertBlankValues(1);
+      framPrint(bmp.pressure / 100.0);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(bmp.readAltitude(SEALEVELPRESSURE_HPA));
+      insertBlankValues(1);
+      framPrint(bmp.readAltitude(SEALEVELPRESSURE_HPA));
 
-        insertBlankValuesNoClose(1);
-        logFile.print(bmp.readAltitude(SEALEVELPRESSURE_HPA) - startingHeight);
-      } else {
-        insertBlankValuesNoClose(4);
-      }
-
-      logFile.close();
+      insertBlankValues(1);
+      framPrint(bmp.readAltitude(SEALEVELPRESSURE_HPA) - startingHeight);
+    } else {
+      insertBlankValues(4);
     }
   } else {
     insertBlankValues(4);
@@ -346,37 +360,32 @@ void outputBMP() {
 
 // Adds IMU data to the CSV row
 void outputIMU() {
-  if (icmReady && sdReady) {
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      /* Get temp, pressure, and altitude */
-      sensors_event_t accel;
-      sensors_event_t gyro;
-      sensors_event_t mag;
-      sensors_event_t temp;
-      if(icm.getEvent(&accel, &gyro, &temp, &mag)){        
-        insertBlankValuesNoClose(1);
-        logFile.print(startingAccelX - accel.acceleration.x);
+  if (icmReady && framReady) {
+    /* Get temp, pressure, and altitude */
+    sensors_event_t accel;
+    sensors_event_t gyro;
+    sensors_event_t mag;
+    sensors_event_t temp;
+    if(icm.getEvent(&accel, &gyro, &temp, &mag)){        
+      insertBlankValues(1);
+      framPrint(startingAccelX - accel.acceleration.x);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(startingAccelY - accel.acceleration.y);
+      insertBlankValues(1);
+      framPrint(startingAccelY - accel.acceleration.y);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(startingAccelZ - accel.acceleration.z);
+      insertBlankValues(1);
+      framPrint(startingAccelZ - accel.acceleration.z);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(gyro.gyro.x);
+      insertBlankValues(1);
+      framPrint(gyro.gyro.x);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(gyro.gyro.y);
+      insertBlankValues(1);
+      framPrint(gyro.gyro.y);
 
-        insertBlankValuesNoClose(1);
-        logFile.print(gyro.gyro.z);
-      } else {
-        insertBlankValuesNoClose(6);
-      }
-
-      logFile.close();
+      insertBlankValues(1);
+      framPrint(gyro.gyro.z);
+    } else {
+      insertBlankValues(6);
     }
   } else {
     insertBlankValues(6);
@@ -391,50 +400,45 @@ char cacheLongitudeDir = 'E';
 float cacheSpeed = 0.0f;
 float cacheAltitude = 0.0f;
 void outputGPS(){
-  if(GPS.available()){
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      GPS.read();
-      if (GPS.newNMEAreceived()) {
-        if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-          return; // we can fail to parse a sentence in which case we should just wait for another
+  if(GPS.available() && framReady){
+    GPS.read();
+    if (GPS.newNMEAreceived()) {
+      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
+        return; // we can fail to parse a sentence in which case we should just wait for another
 
-        // Update GPS Data
-        if (GPS.fix) {
-          cacheLatitude = GPS.latitudeDegrees;
-          cacheLatitudeDir = GPS.lat;
-          if(cacheLatitudeDir == 'S'){
-            cacheLatitude *= -1.0f;
-          }
-          
-          cacheLongitude = GPS.longitudeDegrees;
-          cacheLongitudeDir = GPS.lon;
-          if(cacheLongitudeDir == 'W'){
-            cacheLongitude *= -1.0f;
-          }
-
-          cacheSpeed = GPS.speed * 1.15077945;
-          cacheAltitude = GPS.altitude;
+      // Update GPS Data
+      if (GPS.fix) {
+        cacheLatitude = GPS.latitudeDegrees;
+        cacheLatitudeDir = GPS.lat;
+        if(cacheLatitudeDir == 'S'){
+          cacheLatitude *= -1.0f;
         }
+        
+        cacheLongitude = GPS.longitudeDegrees;
+        cacheLongitudeDir = GPS.lon;
+        if(cacheLongitudeDir == 'W'){
+          cacheLongitude *= -1.0f;
+        }
+
+        cacheSpeed = GPS.speed * 1.15077945;
+        cacheAltitude = GPS.altitude;
       }
-
-      // Print data to CSV
-      insertBlankValuesNoClose(1);
-      logFile.print(cacheLatitude);
-      logFile.print(cacheLatitudeDir);
-
-      insertBlankValuesNoClose(1);
-      logFile.print(cacheLongitude);
-      logFile.print(cacheLongitudeDir);
-
-      insertBlankValuesNoClose(1);
-      logFile.print(cacheSpeed);
-
-      insertBlankValuesNoClose(1);
-      logFile.print(cacheAltitude);
-
-      logFile.close();
     }
+
+    // Print data to CSV
+    insertBlankValues(1);
+    framPrint(cacheLatitude);
+    framPrint(cacheLatitudeDir);
+
+    insertBlankValues(1);
+    framPrint(cacheLongitude);
+    framPrint(cacheLongitudeDir);
+
+    insertBlankValues(1);
+    framPrint(cacheSpeed);
+
+    insertBlankValues(1);
+    framPrint(cacheAltitude);
   } else {
     insertBlankValues(4);
   }
@@ -442,16 +446,11 @@ void outputGPS(){
 
 // Adds actuation data to CSV row
 void outputActuation() {
-  if (sdReady) {
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      insertBlankValuesNoClose(1);
-      logFile.print(desiredActuation);
-      insertBlankValuesNoClose(1);
-      logFile.print(curActuation);
-
-      logFile.close();
-    }
+  if (framReady) {
+    insertBlankValues(1);
+    framPrint(desiredActuation);
+    insertBlankValues(1);
+    framPrint(curActuation);
   } else {
     insertBlankValues(2);
   }
@@ -459,23 +458,9 @@ void outputActuation() {
 
 // Adds the specified number of blank values to the CSV row. Argument is # of blank values to insert
 void insertBlankValues(int numValues) {
-  if (sdReady) {
-    logFile = sd.open(logFileName, FILE_WRITE);
-    if (logFile) {
-      for (int i = 0; i < numValues; i++) {
-        logFile.print(F(",")); // Have blank data when sensor not found
-      }
-
-      logFile.close(); // close the file
-    }
-  }
-}
-
-// Same as insertBlankValues, but assumes file opening/closing is already handled
-void insertBlankValuesNoClose(int numValues) {
-  if (logFile) {
+  if (framReady) {
     for (int i = 0; i < numValues; i++) {
-      logFile.print(F(",")); // Have blank data when sensor not found
+      framPrint(F(",")); // Have blank data when sensor not found
     }
   }
 }
@@ -564,4 +549,53 @@ void soundBuzzer(int totalBeeps){
   }
   
   buzzer.end(0);
+}
+
+// Write newline to FRAM
+void framPrintln(){
+  fram.writeEnable(true);
+  fram.write8(framNextLoc++, '\n');
+  fram.writeEnable(false);
+}
+
+// Write string and newline to FRAM
+template< typename T > void framPrintln( T data ){
+  String str = String(data);
+  int strLen = str.length();
+  fram.writeEnable(true);
+  for(int i = 0; i < strLen; i++){
+    fram.write8(framNextLoc++, str.charAt(i));
+  }
+  fram.write8(framNextLoc++, '\n');
+  fram.writeEnable(false);
+}
+
+// Write string to FRAM
+template< typename T > void framPrint( T data ){
+  String str = String(data);
+  int strLen = str.length();
+  fram.writeEnable(true);
+  for(int i = 0; i < strLen; i++){
+    fram.write8(framNextLoc++, str.charAt(i));
+  }
+  fram.writeEnable(false);
+}
+
+// Dump FRAM to SD Card
+void framDumpToSD(){
+  if(sdReady && framReady){
+    logFile = sd.open(logFileName, FILE_WRITE);
+    if (logFile) {
+      for(int i = 0; i < framNextLoc; i++){
+        logFile.print(fram.read8(i));
+      }
+
+      logFile.close(); // close the file
+      soundBuzzer(1);
+    }else{
+      soundBuzzer(2);
+    }
+  }else{
+    soundBuzzer(2);
+  }
 }

@@ -1,11 +1,12 @@
 #include <Adafruit_ICM20X.h>
-#include <Adafruit_ICM20948.h>
+#include <Adafruit_ICM20649.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
 #include <Adafruit_GPS.h>
 #include <Buzzer.h>
 #include "SdFat.h"
 #include "sdios.h"
+#include "wiring_private.h"
 
 // Constants
 #define SEALEVELPRESSURE_HPA (1018.287) // The pressure level of the area, used to get altitude but wont affect relative alt.
@@ -13,14 +14,9 @@
 #define SPI_SPEED SD_SCK_MHZ(50)        // How fast should the SD Card writing be? Slow down to 10-20 for breadboards, otherwise 50 when soldered
 #define CS_PIN 10                       // What pin is used for CS? Used for SD Card
 #define GPSSerial Serial1               // Serial Port used for hardware Serial Transmission
-#define BUZZER_PIN 13                   // What pin is the buzzer inserted into?
+#define BUZZER_PIN A0                   // What pin is the buzzer inserted into?
 
 // Motor Constants
-#define MOTOR_DIRECTION_PIN 4
-#define MOTOR_STEP_PIN 6
-#define MOTOR_ENABLE_PIN 2
-#define MOTOR_STEPS_PER_REVOLUTION 250
-#define MOTOR_SPEED 400                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
 #define MOTOR_MAX_DEGREES 1080.0        // Maximum actuation
 #define MOTOR_MIN_DEGREES 0.0           // Minimum actuation
 #define MOTOR_ANGLE_MOVEMENT 1800.0     // How many degrees to move at a time max
@@ -31,7 +27,7 @@
 
 // Sensor Objects
 Adafruit_BMP3XX bmp;
-Adafruit_ICM20948 icm;
+Adafruit_ICM20649 icm;
 Adafruit_GPS GPS(&GPSSerial);
 Buzzer buzzer(BUZZER_PIN);
 
@@ -50,10 +46,18 @@ float timeSinceLaunchAccelCondMet = -1.0f;     // used for launch condition
 bool oneTimeActuate = true;             // Should we only actuate once?
 bool hasActuated = false;               // Used to enforce single time actuation
 
-float curActuation = 0.0f;              // Used to track active actuation state
+float lastBuzz = 0.0f;
+
 float desiredActuation = 0.0f;          // Used to track desired actuation state
 bool isActuating = false;
 float lastActuated = 0.0f;
+
+// Setup for Teensy Serial
+#define PIN_SERIAL2_RX       (2ul)               // Pin description number for PIO_SERCOM on D12 -> pin 1 on teensy
+#define PIN_SERIAL2_TX       (3ul)               // Pin description number for PIO_SERCOM on D10 -> pin 0 on teensy
+#define PAD_SERIAL2_TX       (UART_TX_PAD_2)      // SERCOM pad 2
+#define PAD_SERIAL2_RX       (SERCOM_RX_PAD_2)    // SERCOM pad 3
+Uart Serial2 (&sercom2, PIN_SERIAL2_RX, PIN_SERIAL2_TX, PAD_SERIAL2_RX, PAD_SERIAL2_TX);
 
 // Variables for logging
 SdFat sd;
@@ -70,12 +74,11 @@ void setup() {
   while (!Serial);
   Serial.println(F("Starting Actuation Test Program!"));
 
-  // Setup Actuator Flaps
-  // Declare pins as Outputs
-  pinMode(MOTOR_STEP_PIN, OUTPUT);
-  pinMode(MOTOR_DIRECTION_PIN, OUTPUT);
-  pinMode(MOTOR_ENABLE_PIN, OUTPUT);
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH); //disable motor by default
+  // Setup Teensy Comms
+  pinPeripheral(2, PIO_SERCOM);
+  pinPeripheral(3, PIO_SERCOM);
+  Serial2.begin(115200);
+  while(!Serial2);
 
   int failCode = 0; // Fail counter for beep at end
 
@@ -123,9 +126,8 @@ void setup() {
 
     // Set IMU settings
     icm.enableAccelDLPF(true, ICM20X_ACCEL_FREQ_5_7_HZ);
-    icm.setAccelRange(ICM20948_ACCEL_RANGE_16_G);
-    icm.setGyroRange(ICM20948_GYRO_RANGE_2000_DPS);
-    icm.setMagDataRate(AK09916_MAG_DATARATE_10_HZ);
+    icm.setAccelRange(ICM20649_ACCEL_RANGE_30_G);
+    icm.setGyroRange(ICM20649_GYRO_RANGE_4000_DPS);
 
     sensors_event_t accel;
     sensors_event_t gyro;
@@ -173,7 +175,7 @@ void setup() {
     // Setup file with CSV header
     logFile = sd.open(logFileName, FILE_WRITE);
     if (logFile) {
-      logFile.println(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Temp,BMP Pressure,BMP Alt,BMP RelAlt,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,GPS Latitude,GPS Longitude,GPS Velocity,GPS Altitude,Desired Actuation,Cur Actuation"));
+      logFile.println(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Temp,BMP Pressure,BMP Alt,BMP RelAlt,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,GPS Latitude,GPS Longitude,GPS Velocity,GPS Altitude,Desired Actuation"));
       logFile.close(); // close the file
       Serial.println("Log file created: " + logFileName);
       sdReady = true;
@@ -196,6 +198,7 @@ void setup() {
   soundBuzzer(failCode + 1);
   timeNow = millis() / (1000.0f);
   startTime = timeNow;
+  lastBuzz = timeNow;
   startRow(startTime);
   outputBMP();
   outputIMU();
@@ -211,6 +214,12 @@ void loop() {
   lastTimeNow = timeNow;
   timeNow = millis() / (1000.0f);
   startRow(timeNow);
+
+  // Buzz every 10 seconds
+  if(timeNow - lastBuzz >= 10.0f){
+    lastBuzz = timeNow;
+    soundBuzzer(1);
+  }
 
   // Get BMP Data
   outputBMP();
@@ -447,8 +456,6 @@ void outputActuation() {
     if (logFile) {
       insertBlankValuesNoClose(1);
       logFile.print(desiredActuation);
-      insertBlankValuesNoClose(1);
-      logFile.print(curActuation);
 
       logFile.close();
     }
@@ -480,78 +487,9 @@ void insertBlankValuesNoClose(int numValues) {
   }
 }
 
-// Wrapper for motor functions, to prevent misuse and allow for gradual actuation and adjustment between sensor readings
+// Output our desired actuation to the teensy
 void rotateFlaps() {
-  // Figure out how much we WANT to actuate and in what direction
-  float diff = curActuation - desiredActuation;
-  bool isOpening = false;
-  if (diff < 0.0f) {
-    isOpening = true;
-    diff *= -1;
-  }
-
-  // Cap how much we want to actuate to prevent delaying other code for too long
-  float angle = diff;
-  if (angle > MOTOR_ANGLE_MOVEMENT) {
-    angle = MOTOR_ANGLE_MOVEMENT;
-  }
-
-  // Do nothing if actuation would violate bounds
-  if (isOpening && curActuation + angle > MOTOR_MAX_DEGREES) {
-    return;
-  } else if (!isOpening && curActuation - angle < MOTOR_MIN_DEGREES) {
-    return;
-  }
-
-  // If no issues found, and angle is substantial enough, actuate in the needed direction
-  if (angle > 0.1f) {
-    if (isOpening) {
-      rotateCounterClockwise(angle);
-    } else {
-      rotateClockwise(angle);
-    }
-  }
-}
-
-// close the flaps
-void rotateClockwise(float angle)
-{
-  float steps = (angle / 360) * MOTOR_STEPS_PER_REVOLUTION;
-  // Set motor direction clockwise
-  digitalWrite(MOTOR_DIRECTION_PIN, HIGH);
-  // Enable the motor
-  digitalWrite(MOTOR_ENABLE_PIN, LOW);
-
-  for (int x = 0; x < steps; x++)
-  {
-    digitalWrite(MOTOR_STEP_PIN, HIGH);
-    delayMicroseconds(MOTOR_SPEED); //don't go below 200!!!
-    digitalWrite(MOTOR_STEP_PIN, LOW);
-    delayMicroseconds(MOTOR_SPEED);
-  }
-  // Disable the motor
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  curActuation -= angle;
-}
-
-// Open the flaps
-void rotateCounterClockwise(float angle)
-{
-  float steps = (angle / 360) * MOTOR_STEPS_PER_REVOLUTION;
-  // Set motor direction counter-clockwise
-  digitalWrite(MOTOR_DIRECTION_PIN, LOW);
-  // Enable the motor
-  digitalWrite(MOTOR_ENABLE_PIN, LOW);
-  for (int x = 0; x < steps; x++)
-  {
-    digitalWrite(MOTOR_STEP_PIN, HIGH);
-    delayMicroseconds(MOTOR_SPEED); //don't go below 200!!!
-    digitalWrite(MOTOR_STEP_PIN, LOW);
-    delayMicroseconds(MOTOR_SPEED);
-  }
-  // Disable the motor
-  digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  curActuation += angle;
+  Serial2.println(desiredActuation);
 }
 
 // Sound the Buzzer
@@ -564,4 +502,9 @@ void soundBuzzer(int totalBeeps){
   }
   
   buzzer.end(0);
+}
+
+void SERCOM2_Handler()    // Interrupt handler for SERCOM1
+{
+  Serial2.IrqHandler();
 }
