@@ -1,14 +1,16 @@
 
 # Terpulence II - Aerobrakes Computer
 
-The Software for The Terpulence II Aerobrakes Computer
+The Software And Sample Data for The Terpulence II Aerobrakes Computer
 
 
 ## Dependencies
 
 SdFat  
 Adafruit_BMP3XX  
-Adafruit_ICM20948  
+Adafruit_ICM20948/Adafruit_ICM20649
+Adafruit_GPS
+Adafruit_FRAM_SPI  
 
 ## License
 
