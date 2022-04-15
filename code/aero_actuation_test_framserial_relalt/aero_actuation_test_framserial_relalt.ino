@@ -3,19 +3,12 @@
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
 #include <Adafruit_GPS.h>
-#include <Buzzer.h>
-#include "SdFat.h"
-#include "sdios.h"
 #include "wiring_private.h"
-#include "Adafruit_FRAM_SPI.h"
+#include "aerobuzzer.h"
+#include "sdcard.h"
+#include "fram.h"
 
 // Constants
-#define sd_FAT_TYPE 0                   // Used to select the storage type we want to use, 0 just means FAT16/FAT32, 1 is FAT16/FAT32, 2 is exFat, and 3 is both
-#define SPI_SPEED SD_SCK_MHZ(50)        // How fast should the SD Card writing be? Slow down to 10-20 for breadboards, otherwise 50 when soldered
-#define SD_CS_PIN 10                       // What pin is used for CS? Used for SD Card
-#define FRAM_CS_PIN A4                       // What pin is used for FRAM? Used for FRAM
-#define BUZZER_PIN A0                   // What pin is the buzzer inserted into?
-
 #define GPSSerial Serial1               // Serial Port used for hardware Serial Transmission
 
 #define LIFTOFF_GS 4.0f
@@ -28,11 +21,6 @@
 Adafruit_BMP3XX bmp;
 Adafruit_ICM20649 icm;
 Adafruit_GPS GPS(&GPSSerial);
-Buzzer buzzer(BUZZER_PIN);
-Adafruit_FRAM_SPI fram = Adafruit_FRAM_SPI(FRAM_CS_PIN);
-
-uint32_t framNextLoc = 0;                  // Next open FRAM location for writing
-bool isFRAMDumped = false;               // Checked for when FRAM dump condition met
 
 float timeNow = 0.0f;                   // Used to hold current time
 float lastTimeNow = 0.0f;               // Used for delta time
@@ -62,16 +50,9 @@ float lastActuated = 0.0f;
 #define PAD_SERIAL2_RX       (SERCOM_RX_PAD_2)    // SERCOM pad 3
 Uart Serial2 (&sercom2, PIN_SERIAL2_RX, PIN_SERIAL2_TX, PAD_SERIAL2_RX, PAD_SERIAL2_TX);
 
-// Variables for logging
-SdFat sd;
-File logFile;
-String logFileName;
-
 // Holds initialization state of sensor
 bool bmpReady = false;
-bool sdReady = false;
 bool icmReady = false;
-bool framReady = false;
 
 void setup() {
   Serial.begin(115200);
@@ -217,7 +198,7 @@ void setup() {
   // Get first reading
   Serial.println(F("Initalization complete! Beginning feedback loop..."));
   Serial.println(F("Serial console here on out will only be utilized when actuation conditions are met"));
-  soundBuzzer(failCode + 1);
+  soundBuzz(failCode + 1);
   timeNow = millis() / (1000.0f);
   startTime = timeNow;
   lastBuzz = timeNow;
@@ -265,7 +246,7 @@ void loop() {
   // Buzz every 10 seconds
   if(timeNow - lastBuzz >= 10.0f){
     lastBuzz = timeNow;
-    soundBuzzer(1);
+    soundBuzz(1);
   }
 
   if(!isFRAMDumped){
@@ -477,72 +458,6 @@ void insertBlankValues(int numValues) {
 // Output our desired actuation to the teensy
 void rotateFlaps() {
   Serial2.println(desiredActuation);
-}
-
-// Sound the Buzzer
-void soundBuzzer(int totalBeeps){
-  buzzer.begin(BUZZER_PIN);
-
-  for(int i = 0; i < totalBeeps; i++){
-    buzzer.sound(NOTE_G3, 500);
-    delay(100);
-  }
-  
-  buzzer.end(0);
-}
-
-// Write newline to FRAM
-void framPrintln(){
-  fram.writeEnable(true);
-  fram.write8(framNextLoc++, '\n');
-  fram.writeEnable(false);
-}
-
-// Write string and newline to FRAM
-template< typename T > void framPrintln( T data ){
-  String str = String(data);
-  int strLen = str.length();
-  fram.writeEnable(true);
-  for(int i = 0; i < strLen; i++){
-    fram.write8(framNextLoc++, str.charAt(i));
-  }
-  fram.write8(framNextLoc++, '\n');
-  fram.writeEnable(false);
-}
-
-// Write string to FRAM
-template< typename T > void framPrint( T data ){
-  String str = String(data);
-  int strLen = str.length();
-  fram.writeEnable(true);
-  for(int i = 0; i < strLen; i++){
-    fram.write8(framNextLoc++, str.charAt(i));
-  }
-  fram.writeEnable(false);
-}
-
-// Dump FRAM to SD Card
-void framDumpToSD(){
-  if(sdReady && framReady){
-      String curStr = "";
-      for(int i = 0; i < framNextLoc; i++){
-        //Serial.println(String(i) + "/" + String(framNextLoc));
-        char nextByte = fram.read8(i);
-        curStr = curStr + nextByte;
-        if(nextByte == '\n'){
-          logFile = sd.open(logFileName, FILE_WRITE);
-          if (logFile) {
-            logFile.print(curStr);
-            logFile.close(); // close the file
-          }
-          curStr = "";
-        }
-      }
-      
-      soundBuzzer(1);
-  }else{
-    soundBuzzer(3);
-  }
 }
 
 void SERCOM2_Handler()    // Interrupt handler for SERCOM1
