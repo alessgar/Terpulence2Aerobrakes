@@ -13,4 +13,6 @@ extern File logFile;
 extern String logFileName;
 extern bool sdReady;
 
+bool setupSDCard();
+
 #endif

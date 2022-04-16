@@ -4,6 +4,7 @@
 #include "Adafruit_FRAM_SPI.h"
 #include "sdcard.h"
 #include "aerobuzzer.h"
+#include "timing.h"
 
 #define FRAM_CS_PIN A4                                       // What pin is used for FRAM? Used for FRAM
 
@@ -37,6 +38,19 @@ template< typename T > void framPrint( T data ){
   fram.writeEnable(false);
 }
 
+// inserts timestamp to start data row. Argument is timestamp
+void startRow(float curTime);
+
+// ends the row and adds a newline
+void endRow();
+
 void framDumpToSD();
+
+bool isFramReady();
+bool isFramDumped();
+int getFramNextLoc();
+bool setupFram();
+
+void insertBlankValues(int numValues);
 
 #endif

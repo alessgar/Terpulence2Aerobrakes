@@ -34,4 +34,74 @@ void framDumpToSD(){
   }else{
     soundBuzz(3);
   }
+
+  framNextLoc = 0;
+  isFRAMDumped = true;
+}
+
+// inserts timestamp to start data row. Argument is timestamp
+void startRow(float curTime) {
+  if (framReady) {
+    framPrint(curTime - getStartTime());
+
+    insertBlankValues(1);
+    if(getLaunchTime() < 0.1f){
+      framPrint("0.00");
+    }else{
+      framPrint(curTime - getLaunchTime());
+    }
+
+    insertBlankValues(1);
+    if(getLastActuated() < 0.1f){
+      framPrint("0.00");
+    }else{
+      framPrint(curTime - getLastActuated());
+    }
+  }
+}
+
+// ends the row and adds a newline
+void endRow() {
+  if (framReady) {
+    framPrintln(); // Move to next data row
+  }
+}
+
+bool isFramReady(){
+    return framReady;
+}
+
+bool isFramDumped(){
+    return isFRAMDumped;
+}
+
+int getFramNextLoc(){
+    return framNextLoc;
+}
+
+bool setupFram(){
+    pinMode(FRAM_CS_PIN, OUTPUT);
+    digitalWrite(FRAM_CS_PIN, HIGH);
+
+    if(fram.begin(3)){  // 256KB uses fram.begin() ; 512KB uses fram.begin(3) 
+        Serial.println(F("FRAM Ready"));
+        framReady = true;
+
+        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Temp,BMP Pressure,BMP Alt,BMP RelAlt,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,GPS Latitude,GPS Longitude,GPS Velocity,GPS Altitude,Desired Actuation"));
+    }else{
+        Serial.println(F("FRAM not found"));
+       
+        return false;
+    }
+
+    return true;
+}
+
+// Adds the specified number of blank values to the CSV row. Argument is # of blank values to insert
+void insertBlankValues(int numValues) {
+  if (isFramReady()) {
+    for (int i = 0; i < numValues; i++) {
+      framPrint(F(",")); // Have blank data when sensor not found
+    }
+  }
 }
