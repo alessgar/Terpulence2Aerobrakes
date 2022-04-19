@@ -25,7 +25,7 @@ void setup() {
 }
 
 void loop() {
-  Serial2.println(540.0f);
+  Serial2.println(75.0f);
   digitalWrite(LED_BUILTIN, HIGH);
   delay(500);
   Serial2.println(0.0f);
