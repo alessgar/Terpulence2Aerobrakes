@@ -11,6 +11,10 @@
 #define MOTOR_MIN_DEGREES 0.0           // Minimum actuation
 #define MOTOR_ANGLE_MOVEMENT 1080.0     // How many degrees to move at a time max
 
+#define LNot 209.423
+#define Wh 38.1
+#define Wa 23.2918
+
 int curActuation = 0;              // Used to track active actuation state
 int desiredActuation = 0;          // Used to track desired actuation state
 
@@ -114,7 +118,7 @@ void rotateFlaps() {
 }
 
 float angleToSteps(float angle){
-  float newMM = 209.423 + (38.1 * sin(angle)) - sqrt((209.423 * 209.423) + ((38.1 - 23.2918) * (38.1 - 23.2918)) - (((38.1 * cos(angle)) - 23.2918) * ((38.1 * cos(angle)) - 23.2918)));
+  float newMM = LNot + (Wh * sin(angle)) - sqrt((LNot * LNot) + ((Wh - Wa) * (Wh - Wa)) - (((Wh * cos(angle)) - Wa) * ((Wh * cos(angle)) - Wa)));
   return newMM * (200.0/6.0);
 }
 
