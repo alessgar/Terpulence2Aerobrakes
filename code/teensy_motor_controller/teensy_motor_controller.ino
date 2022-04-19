@@ -5,14 +5,14 @@
 #define MOTOR_STEP_PIN 6
 #define MOTOR_ENABLE_PIN 4
 #define MOTOR_FAULT_PIN 3
-#define MOTOR_STEPS_PER_REVOLUTION 250
+#define MOTOR_STEPS_PER_REVOLUTION 200
 #define MOTOR_SPEED 400                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
-#define MOTOR_MAX_DEGREES 540.0        // Maximum actuation
+#define MOTOR_MAX_DEGREES 1080.0        // Maximum actuation
 #define MOTOR_MIN_DEGREES 0.0           // Minimum actuation
-#define MOTOR_ANGLE_MOVEMENT 540.0     // How many degrees to move at a time max
+#define MOTOR_ANGLE_MOVEMENT 1080.0     // How many degrees to move at a time max
 
-float curActuation = 0.0f;              // Used to track active actuation state
-float desiredActuation = 0.0f;          // Used to track desired actuation state
+int curActuation = 0;              // Used to track active actuation state
+int desiredActuation = 0;          // Used to track desired actuation state
 
 char receivedChars[64];
 boolean newData = false;
@@ -46,7 +46,7 @@ void loop() {
   if(newData){
     digitalWrite(LED_BUILTIN, HIGH);
     newData = false;
-    desiredActuation = String(receivedChars).toFloat();
+    desiredActuation = (int)angleToSteps(String(receivedChars).toFloat() * (60.0/1080.0));
     Serial.println(desiredActuation);
     digitalWrite(LED_BUILTIN, LOW);
     //while (HWSERIAL.available() > 0) {
@@ -83,15 +83,15 @@ void recvWithEndMarker() {
 // Wrapper for motor functions, to prevent misuse and allow for gradual actuation and adjustment between sensor readings
 void rotateFlaps() {
   // Figure out how much we WANT to actuate and in what direction
-  float diff = curActuation - desiredActuation;
+  int diff = curActuation - desiredActuation;
   bool isOpening = false;
-  if (diff < 0.0f) {
+  if (diff < 0) {
     isOpening = true;
     diff *= -1;
   }
 
   // Cap how much we want to actuate to prevent delaying other code for too long
-  float angle = diff;
+  int angle = diff;
   if (angle > MOTOR_ANGLE_MOVEMENT) {
     angle = MOTOR_ANGLE_MOVEMENT;
   }
@@ -104,7 +104,7 @@ void rotateFlaps() {
   }
 
   // If no issues found, and angle is substantial enough, actuate in the needed direction
-  if (angle > 0.1f) {
+  if (angle > 0) {
     if (isOpening) {
       rotateClockwise(angle);
     } else {
@@ -113,10 +113,16 @@ void rotateFlaps() {
   }
 }
 
+float angleToSteps(float angle){
+  float newMM = 209.423 + (38.1 * sin(angle)) - sqrt((209.423 * 209.423) + ((38.1 - 23.2918) * (38.1 - 23.2918)) - (((38.1 * cos(angle)) - 23.2918) * ((38.1 * cos(angle)) - 23.2918)));
+  return newMM * (200.0/6.0);
+}
+
 // close the flaps
-void rotateClockwise(float angle)
+void rotateClockwise(int angle)
 {
-  float steps = (angle / 360) * MOTOR_STEPS_PER_REVOLUTION;
+  //float steps = (angle / 360) * MOTOR_STEPS_PER_REVOLUTION;
+  int steps = angle;
   // Set motor direction clockwise
   digitalWrite(MOTOR_DIRECTION_PIN, HIGH);
   // Enable the motor
@@ -135,9 +141,10 @@ void rotateClockwise(float angle)
 }
 
 // Open the flaps
-void rotateCounterClockwise(float angle)
+void rotateCounterClockwise(int angle)
 {
-  float steps = (angle / 360) * MOTOR_STEPS_PER_REVOLUTION;
+  //float steps = (angle / 360) * MOTOR_STEPS_PER_REVOLUTION;
+  int steps = angle;
   // Set motor direction counter-clockwise
   digitalWrite(MOTOR_DIRECTION_PIN, LOW);
   // Enable the motor
