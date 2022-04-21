@@ -13,11 +13,11 @@ bool setupGPS(){
     gpsready = true;
     Serial.println(F("GPS Found and Initialized!"));
   }else{
-    Serial.println(F("GPS not found!"));
+    return false;
+    /*Serial.println(F("GPS not found!"));
     if(!failCode){
       failCode = 3;
-    }
-    return false;
+    }*/
   }
   return gpsready;
 }

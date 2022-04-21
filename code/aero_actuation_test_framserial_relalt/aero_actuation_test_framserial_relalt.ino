@@ -9,6 +9,7 @@
 #include "fram.h"
 #include "timing.h"
 #include "actuation.h"
+#include "aero_gps.h"
 
 #define GPSSerial Serial1               // Serial Port used for hardware Serial Transmission
 
@@ -22,7 +23,7 @@
 // Sensor Objects
 Adafruit_BMP3XX bmp;
 Adafruit_ICM20649 icm;
-Adafruit_GPS GPS(&GPSSerial);
+// Adafruit_GPS GPS(&GPSSerial);
 
 float timeNow = 0.0f;                   // Used to hold current time
 float lastTimeNow = 0.0f;               // Used for delta time
@@ -114,15 +115,7 @@ void setup() {
   }
 
   // Setup GPS
-  GPS.begin(9600);
-  delay(3000);
-  if(GPS.available()){
-    GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-    //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
-    GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-    Serial.println(F("GPS Found and Initialized!"));
-  }else{
-    Serial.println(F("GPS not found!"));
+  if(!setupGPS()){
     if(!failCode){
       failCode = 3;
     }
@@ -298,57 +291,5 @@ void outputIMU() {
     }
   } else {
     insertBlankValues(6);
-  }
-}
-
-// Adds GPS data to CSV row
-float cacheLatitude = 0.0f;
-float cacheLongitude = 0.0f;
-char cacheLatitudeDir = 'N';
-char cacheLongitudeDir = 'E';
-float cacheSpeed = 0.0f;
-float cacheAltitude = 0.0f;
-void outputGPS(){
-  if(GPS.available() && isFramReady()){
-    GPS.read();
-    if (GPS.newNMEAreceived()) {
-      if (!GPS.parse(GPS.lastNMEA())) // this also sets the newNMEAreceived() flag to false
-        return; // we can fail to parse a sentence in which case we should just wait for another
-
-      // Update GPS Data
-      if (GPS.fix) {
-        cacheLatitude = GPS.latitudeDegrees;
-        cacheLatitudeDir = GPS.lat;
-        if(cacheLatitudeDir == 'S'){
-          cacheLatitude *= -1.0f;
-        }
-        
-        cacheLongitude = GPS.longitudeDegrees;
-        cacheLongitudeDir = GPS.lon;
-        if(cacheLongitudeDir == 'W'){
-          cacheLongitude *= -1.0f;
-        }
-
-        cacheSpeed = GPS.speed * 1.15077945;
-        cacheAltitude = GPS.altitude;
-      }
-    }
-
-    // Print data to CSV
-    insertBlankValues(1);
-    framPrint(cacheLatitude);
-    framPrint(cacheLatitudeDir);
-
-    insertBlankValues(1);
-    framPrint(cacheLongitude);
-    framPrint(cacheLongitudeDir);
-
-    insertBlankValues(1);
-    framPrint(cacheSpeed);
-
-    insertBlankValues(1);
-    framPrint(cacheAltitude);
-  } else {
-    insertBlankValues(4);
   }
 }
