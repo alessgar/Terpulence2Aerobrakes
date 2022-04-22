@@ -3,14 +3,14 @@
 
 extern float startTime;                 // Used for relative timestamps
 extern float launchTime;                // Used for relative launch timestamp
-extern float lastActuated;
+extern float lastActuated;              // Used to keep track of when we last actuated
 
-void setStartTime(float input);
-void setLaunchTime(float input);
-void setLastActuated(float input);
+void setStartTime(float input);         // Set the startup timestamp
+void setLaunchTime(float input);        // Set the launch timestamp
+void setLastActuated(float input);      // Set the last actuation timestamp
 
-float getStartTime();
-float getLaunchTime();
-float getLastActuated();
+float getStartTime();                   // Return our startup timestamp
+float getLaunchTime();                  // Return our launch timestamp
+float getLastActuated();                // Return our last actuation timestamp
 
 #endif

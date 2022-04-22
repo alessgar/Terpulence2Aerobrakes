@@ -11,8 +11,8 @@
 extern SdFat sd;
 extern File logFile;
 extern String logFileName;
-extern bool sdReady;
 
-bool setupSDCard();
+bool setupSDCard();                         // Initializes the sensor
+bool isSDReady();                           // Returns whether the sensor is initialized
 
 #endif

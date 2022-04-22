@@ -14,7 +14,7 @@ void framPrintln(){
 
 // Dump FRAM to SD Card
 void framDumpToSD(){
-  if(sdReady && framReady){
+  if(isSDReady() && framReady){
       String curStr = "";
       for(int i = 0; i < framNextLoc; i++){
         //Serial.println(String(i) + "/" + String(framNextLoc));
@@ -67,18 +67,22 @@ void endRow() {
   }
 }
 
+// Returns whether the FRAM is initialized
 bool isFramReady(){
     return framReady;
 }
 
+// Returns whether the FRAM has been dumped
 bool isFramDumped(){
     return isFRAMDumped;
 }
 
+// Returns the next free memory location in FRAM
 int getFramNextLoc(){
     return framNextLoc;
 }
 
+// Initializes the FRAM
 bool setupFram(){
     pinMode(FRAM_CS_PIN, OUTPUT);
     digitalWrite(FRAM_CS_PIN, HIGH);

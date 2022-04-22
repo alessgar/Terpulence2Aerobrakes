@@ -7,6 +7,6 @@
 
 extern Buzzer buzz;
 
-void soundBuzz(int totalBeeps);
+void soundBuzz(int totalBeeps);         // Sound the Buzzer
 
 #endif

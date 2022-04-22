@@ -1,10 +1,11 @@
 #include "sdcard.h"
 
 SdFat sd;
-File logFile;
-String logFileName;
-bool sdReady = false;
+File logFile;                                                                                   // File object to use for logging
+String logFileName;                                                                             // Name of the log file
+bool sdReady = false;                                                                           // Whether the SD card has been initialized
 
+// Initializes the sensor
 bool setupSDCard(){
     pinMode(SD_CS_PIN, OUTPUT);
     digitalWrite(SD_CS_PIN, HIGH);
@@ -35,4 +36,9 @@ bool setupSDCard(){
     }
 
     return true;
+}
+
+// Returns whether the sensor is initialized
+bool isSDReady(){
+  return sdReady;
 }

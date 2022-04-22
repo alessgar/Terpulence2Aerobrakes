@@ -9,11 +9,9 @@
 #define FRAM_CS_PIN A4                                       // What pin is used for FRAM? Used for FRAM
 
 extern Adafruit_FRAM_SPI fram;
-extern uint32_t framNextLoc;                                    // Next open FRAM location for writing
-extern bool isFRAMDumped;                                   // Checked for when FRAM dump condition met
-extern bool framReady;
+extern uint32_t framNextLoc;                                // Next open FRAM location for writing
 
-void framPrintln();
+void framPrintln();                                         // Add a newline to the file in FRAM
 
 // Write string and newline to FRAM
 template< typename T > void framPrintln( T data ){
@@ -38,19 +36,16 @@ template< typename T > void framPrint( T data ){
   fram.writeEnable(false);
 }
 
-// inserts timestamp to start data row. Argument is timestamp
-void startRow(float curTime);
+void startRow(float curTime);                               // inserts timestamp to start data row. Argument is timestamp
 
-// ends the row and adds a newline
-void endRow();
+void endRow();                                              // ends the row and adds a newline
 
-void framDumpToSD();
+void framDumpToSD();                                        // Dump FRAM to SD Card
 
-bool isFramReady();
-bool isFramDumped();
-int getFramNextLoc();
-bool setupFram();
+bool isFramReady();                                         // Returns whether the FRAM is initialized
+bool isFramDumped();                                        // Returns whether the FRAM has been dumped
+int getFramNextLoc();                                       // Returns the next free memory location in FRAM
+bool setupFram();                                           // Initializes the FRAM
 
-void insertBlankValues(int numValues);
-
+void insertBlankValues(int numValues);                      // Adds the specified number of blank values to the CSV row. Argument is # of blank values to insert
 #endif

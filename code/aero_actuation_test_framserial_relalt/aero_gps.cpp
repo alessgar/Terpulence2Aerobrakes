@@ -1,8 +1,9 @@
 #include "aero_gps.h"
-#include "fram.h"
-Adafruit_GPS GPS(&GPSSerial);
-bool gpsready = false;
 
+Adafruit_GPS GPS(&GPSSerial); 
+bool gpsready = false;            // Whether the sensor is initialized
+
+// Initialize the sensor
 bool setupGPS(){
   GPS.begin(9600);
   delay(3000);
@@ -19,7 +20,7 @@ bool setupGPS(){
       failCode = 3;
     }*/
   }
-  return gpsready;
+  return true;
 }
 
 // Adds GPS data to CSV row
@@ -72,4 +73,9 @@ void outputGPS(){
   } else {
     insertBlankValues(4);
   }
+}
+
+// Returns whether the GPS is initialized
+bool isGPSReady(){
+  return gpsready;
 }
