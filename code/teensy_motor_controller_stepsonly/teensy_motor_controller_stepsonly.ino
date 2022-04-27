@@ -51,7 +51,7 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
     newData = false;
     Serial.println(String(receivedChars).toFloat());
-    desiredActuation = (int)angleToSteps(String(receivedChars).toFloat());
+    desiredActuation = (int)String(receivedChars).toFloat();
     Serial.println(desiredActuation);
     //while (HWSERIAL.available() > 0) {
     //    HWSERIAL.read();

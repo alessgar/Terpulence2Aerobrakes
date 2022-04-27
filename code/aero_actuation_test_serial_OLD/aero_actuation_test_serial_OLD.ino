@@ -25,54 +25,12 @@ void setup() {
 }
 
 void loop() {
-  Serial2.println(85.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(3000);
-  Serial2.println(0.0f);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(3000);
-  /*
-  Serial2.println(60.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(10000);
-  Serial2.println(0.0f);
-  digitalWrite(LED_BUILTIN, LOW);
-  delay(3000);
-  */
-  /*
-  Serial2.println(30.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(60.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(85.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(0.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  */
-  /*
-  Serial2.println(75.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(60.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(15.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(45.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(30.0f);
+  Serial2.println(540.0f);
   digitalWrite(LED_BUILTIN, HIGH);
   delay(500);
   Serial2.println(0.0f);
   digitalWrite(LED_BUILTIN, LOW);
   delay(500);
-  */
 }
 
 void SERCOM2_Handler()    // Interrupt handler for SERCOM1
