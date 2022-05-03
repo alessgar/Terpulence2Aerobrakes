@@ -82,6 +82,15 @@ int getFramNextLoc(){
     return framNextLoc;
 }
 
+// Returns true if next location is at 90% of total capacity
+bool getCapacity(){
+    if (framNextLoc >= (0.9*512000)){
+      return true;
+    }else{
+      return false;
+    }
+}
+
 // Initializes the FRAM
 bool setupFram(){
     pinMode(FRAM_CS_PIN, OUTPUT);

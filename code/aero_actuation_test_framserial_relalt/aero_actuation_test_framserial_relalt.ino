@@ -163,7 +163,9 @@ void loop() {
   }
 
   // Post Launch Condition - Dump FRAM to SD Card
-  if(!isFramDumped() && isLaunched && (timeNow - getLaunchTime() >= 100.0f)){ // record 100 seconds at launch
+  //if(!isFramDumped() && isLaunched && (timeNow - getLaunchTime() >= 100.0f)){ // record 100 seconds at launch
+  // Dump if Fram isn't dumped and either the capacity is > 90% or descending
+  if(!isFramDumped() && (getCapacity() || getRelAccelZ <= 0))
     framDumpToSD();
   }
 }
