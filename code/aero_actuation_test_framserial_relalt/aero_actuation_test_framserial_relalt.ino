@@ -86,7 +86,7 @@ void loop() {
   timeNow = millis() / (1000.0f);
 
   // Buzz every 10 seconds
-  if(timeNow - lastBuzz >= 10.0f){
+  if(!isLaunched && (timeNow - lastBuzz >= 10.0f)){
     lastBuzz = timeNow;
     soundBuzz(1);
   }

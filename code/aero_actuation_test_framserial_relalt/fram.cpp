@@ -30,7 +30,7 @@ void framDumpToSD(){
         }
       }
       
-      soundBuzz(1);
+      //soundBuzz(1);
   }else{
     soundBuzz(3);
   }
