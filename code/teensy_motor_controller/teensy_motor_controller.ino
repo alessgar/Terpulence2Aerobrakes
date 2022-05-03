@@ -5,11 +5,10 @@
 #define MOTOR_STEP_PIN 6
 #define MOTOR_ENABLE_PIN 4
 #define MOTOR_FAULT_PIN 3
-#define MOTOR_STEPS_PER_REVOLUTION 200
-#define MOTOR_SPEED 800                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
-#define MOTOR_MAX_DEGREES 1500.0        // Maximum actuation
+#define MOTOR_SPEED 250                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
+#define MOTOR_MAX_DEGREES 1300.0        // Maximum actuation
 #define MOTOR_MIN_DEGREES 0.0           // Minimum actuation
-#define MOTOR_ANGLE_MOVEMENT 1500.0     // How many degrees to move at a time max
+#define MOTOR_ANGLE_MOVEMENT 130.0     // How many degrees to move at a time max
 
 #define LNot 209.423
 #define Wh 38.1
@@ -41,22 +40,35 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
   delay(500);
-  digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LED_BUILTIN, LOW); 
   //Serial.println(F("Test Program Ready!"));
+
+  //Serial.println(angleToSteps(20.0f));
+
+  while (HWSERIAL.available() > 0) {
+      HWSERIAL.read();
+  }
 }
 
 void loop() {
   recvWithEndMarker();
-  if(newData){
+  while(newData){
     digitalWrite(LED_BUILTIN, HIGH);
     newData = false;
-    Serial.println(String(receivedChars).toFloat());
-    desiredActuation = (int)angleToSteps(String(receivedChars).toFloat());
-    Serial.println(desiredActuation);
-    //while (HWSERIAL.available() > 0) {
-    //    HWSERIAL.read();
-    //}
+    float newAngle = String(receivedChars).toFloat();
+    /*Serial.println(newAngle);
+    Serial.println((int)angleToSteps(newAngle));
+    Serial.println(curActuation);
+    Serial.println("--------------------------------------");*/
+    if (newAngle > -1.0f && newAngle < 91.0f){
+        desiredActuation = (int)angleToSteps(newAngle);
+    }
+    recvWithEndMarker();
   }
+  
+  //while (HWSERIAL.available() > 0) {
+  //    HWSERIAL.read();
+  //}
   
   rotateFlaps();
   digitalWrite(LED_BUILTIN, LOW);
@@ -69,6 +81,8 @@ void recvWithEndMarker() {
     
     if (HWSERIAL.available() > 0) {
         rc = HWSERIAL.read();
+        //Serial.print(" - ");
+        //Serial.println(rc);
 
         if (rc != endMarker) {
             receivedChars[ndx] = rc;
@@ -81,6 +95,7 @@ void recvWithEndMarker() {
             receivedChars[ndx] = '\0'; // terminate the string
             ndx = 0;
             newData = true;
+            return;
         }
     }
 }
@@ -110,11 +125,16 @@ void rotateFlaps() {
 
   // If no issues found, and angle is substantial enough, actuate in the needed direction
   if (angle > 0) {
+    angle += 1;
     if (isOpening) {
       rotateClockwise(angle);
     } else {
       rotateCounterClockwise(angle);
     }
+
+    //Serial.println(curActuation);
+    //Serial.println(desiredActuation);
+    //Serial.println(angle);
   }
 }
 
@@ -139,10 +159,11 @@ void rotateClockwise(int angle)
     delayMicroseconds(MOTOR_SPEED); //don't go below 200!!!
     digitalWrite(MOTOR_STEP_PIN, LOW);
     delayMicroseconds(MOTOR_SPEED);
+    curActuation++;
   }
   // Disable the motor
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  curActuation += angle;
+  //curActuation += angle;
 }
 
 // Open the flaps
@@ -160,8 +181,9 @@ void rotateCounterClockwise(int angle)
     delayMicroseconds(MOTOR_SPEED); //don't go below 200!!!
     digitalWrite(MOTOR_STEP_PIN, LOW);
     delayMicroseconds(MOTOR_SPEED);
+    curActuation -= 1;
   }
   // Disable the motor
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  curActuation -= angle;
+  //curActuation -= angle;
 }

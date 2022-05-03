@@ -8,6 +8,8 @@
 
 Uart Serial2 (&sercom2, PIN_SERIAL2_RX, PIN_SERIAL2_TX, PAD_SERIAL2_RX, PAD_SERIAL2_TX);
 
+int i = 90;
+
 void setup() {
   Serial.begin(115200);
   while (!Serial);
@@ -22,15 +24,26 @@ void setup() {
 
   while(!Serial2);
   delay(5000);
+
+  
+  //Serial2.println(90.0);
+  //delay(5000);
+  
 }
 
 void loop() {
-  Serial2.println(85.0f);
+  /*
+  Serial2.println(60.0f);
   digitalWrite(LED_BUILTIN, HIGH);
-  delay(3000);
+  delay(10);
   Serial2.println(0.0f);
   digitalWrite(LED_BUILTIN, LOW);
+  delay(10);
+  Serial2.println(60.0f);
   delay(3000);
+  Serial2.println(0.0f);
+  delay(3000);
+  */
   /*
   Serial2.println(60.0f);
   digitalWrite(LED_BUILTIN, HIGH);
@@ -44,34 +57,92 @@ void loop() {
   digitalWrite(LED_BUILTIN, HIGH);
   delay(500);
   Serial2.println(60.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
   delay(500);
   Serial2.println(85.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(0.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  */
-  /*
-  Serial2.println(75.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(60.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(15.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(45.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
-  delay(500);
-  Serial2.println(30.0f);
-  digitalWrite(LED_BUILTIN, HIGH);
   delay(500);
   Serial2.println(0.0f);
   digitalWrite(LED_BUILTIN, LOW);
   delay(500);
+  */
+  /*
+  Serial2.println(90.0f);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(50);
+  Serial2.println(15.0f);
+  delay(50);
+  Serial2.println(75.0f);
+  delay(50);
+  Serial2.println(30.0f);
+  delay(50);
+  Serial2.println(60.0f);
+  delay(50);
+  Serial2.println(45.0f);
+  delay(50);
+  Serial2.println(0.0f);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(5000);
+  */
+
+  /*
+  float value = 45.0f + (30.0f * sin(millis()/1000.0f));
+  value = ceil(value * 100.0) / 100.0;
+  Serial.println(value);
+  Serial2.println(value);
+  //Serial2.println(10.5f);
+  delay(70);
+  */
+
+  
+  Serial.println(((sin(i) * 30.0) + 45.0));
+  Serial2.println(((sin(i++) * 30.0) + 45.0));
+  delay(50);
+
+  
+  /*
+  while(i < 90){
+    for(int j = 0; j < 10; j++){
+      //Serial.println(i);
+      Serial2.println(i);
+      delay(50);
+    }
+    
+    i+=1;
+    
+  }
+
+  while(i >= 0){
+     for(int j = 0; j < 10; j++){
+      //Serial.println(i);
+      Serial2.println(i);
+      delay(50);
+    }
+    i-=1;
+  }
+  
+  */
+  
+
+  /*
+  Serial2.println(1080);
+  delay(3000);
+  Serial2.println(0);
+  delay(3000);
+  Serial2.println(25);
+  delay(1000);
+  Serial2.println(0);
+  delay(1000);
+  Serial2.println(50);
+  delay(1000);
+  Serial2.println(0);
+  delay(1000);
+  Serial2.println(100);
+  delay(1000);
+  Serial2.println(0);
+  delay(1000);
+  Serial2.println(200);
+  delay(1000);
+  Serial2.println(0);
+  delay(1000);
   */
 }
 

@@ -6,10 +6,10 @@
 #define MOTOR_ENABLE_PIN 4
 #define MOTOR_FAULT_PIN 3
 #define MOTOR_STEPS_PER_REVOLUTION 200
-#define MOTOR_SPEED 800                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
-#define MOTOR_MAX_DEGREES 1500.0        // Maximum actuation
+#define MOTOR_SPEED 400                 // microseconds between each step; 200 microseconds is fastest with accurate movement, going below will make it too fast
+#define MOTOR_MAX_DEGREES 1300.0        // Maximum actuation
 #define MOTOR_MIN_DEGREES 0.0           // Minimum actuation
-#define MOTOR_ANGLE_MOVEMENT 1500.0     // How many degrees to move at a time max
+#define MOTOR_ANGLE_MOVEMENT 100.0     // How many degrees to move at a time max
 
 #define LNot 209.423
 #define Wh 38.1
@@ -93,6 +93,10 @@ void rotateFlaps() {
   if (diff < 0) {
     isOpening = true;
     diff *= -1;
+  }
+
+  if(diff < 99.0){
+    return;
   }
 
   // Cap how much we want to actuate to prevent delaying other code for too long
