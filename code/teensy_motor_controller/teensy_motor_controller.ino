@@ -159,11 +159,10 @@ void rotateClockwise(int angle)
     delayMicroseconds(MOTOR_SPEED); //don't go below 200!!!
     digitalWrite(MOTOR_STEP_PIN, LOW);
     delayMicroseconds(MOTOR_SPEED);
-    curActuation++;
   }
   // Disable the motor
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  //curActuation += angle;
+  curActuation += angle;
 }
 
 // Open the flaps
@@ -181,9 +180,8 @@ void rotateCounterClockwise(int angle)
     delayMicroseconds(MOTOR_SPEED); //don't go below 200!!!
     digitalWrite(MOTOR_STEP_PIN, LOW);
     delayMicroseconds(MOTOR_SPEED);
-    curActuation -= 1;
   }
   // Disable the motor
   digitalWrite(MOTOR_ENABLE_PIN, HIGH);
-  //curActuation -= angle;
+  curActuation -= angle;
 }

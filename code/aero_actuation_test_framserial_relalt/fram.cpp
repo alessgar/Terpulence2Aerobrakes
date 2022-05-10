@@ -32,7 +32,9 @@ void framDumpToSD(){
       
       //soundBuzz(1);
   }else{
-    soundBuzz(3);
+    if(getLaunchTime() > getStartTime()){
+      soundBuzz(3);
+    }
   }
 
   framNextLoc = 0;
@@ -83,12 +85,8 @@ int getFramNextLoc(){
 }
 
 // Returns true if next location is at 90% of total capacity
-bool getCapacity(){
-    if (framNextLoc >= (0.9*512000)){
-      return true;
-    }else{
-      return false;
-    }
+float getCapacity(){
+    return framNextLoc / 512000.0f;
 }
 
 // Initializes the FRAM
@@ -100,7 +98,7 @@ bool setupFram(){
         Serial.println(F("FRAM Ready"));
         framReady = true;
 
-        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Temp,BMP Pressure,BMP Alt,BMP RelAlt,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,GPS Latitude,GPS Longitude,GPS Velocity,GPS Altitude,Desired Actuation"));
+        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Alt,BMP RelAlt,Est. Height,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,Est. Velocity,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,Pitch,Yaw,Roll,Tilt,Desired Actuation"));
     }else{
         Serial.println(F("FRAM not found"));
        
@@ -117,4 +115,8 @@ void insertBlankValues(int numValues) {
       framPrint(F(",")); // Have blank data when sensor not found
     }
   }
+}
+
+void resetDumpStatus(){
+  isFRAMDumped = false;
 }

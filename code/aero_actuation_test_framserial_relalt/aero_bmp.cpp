@@ -32,22 +32,26 @@ void outputBMP(){
   if (bmpReady && isFramReady()) {
     /* Get temp, pressure, and altitude */
     if (bmp.performReading()) {
-      insertBlankValues(1);
-      framPrint(bmp.temperature);
+      //insertBlankValues(1);
+      //framPrint(bmp.temperature);
 
-      insertBlankValues(1);
-      framPrint(bmp.pressure / 100.0);
+      //insertBlankValues(1);
+      //framPrint(bmp.pressure / 100.0);
 
       insertBlankValues(1);
       framPrint(bmp.readAltitude(SEALEVELPRESSURE_HPA));
 
       insertBlankValues(1);
       framPrint(bmp.readAltitude(SEALEVELPRESSURE_HPA) - startingHeight);
+
+      // Estimated Height
+      insertBlankValues(1);
+      framPrint(0.0);
     } else {
-      insertBlankValues(4);
+      insertBlankValues(3);
     }
   } else {
-    insertBlankValues(4);
+    insertBlankValues(3);
   }
 }
 

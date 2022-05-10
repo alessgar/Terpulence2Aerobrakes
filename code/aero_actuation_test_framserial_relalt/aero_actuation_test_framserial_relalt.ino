@@ -95,7 +95,7 @@ void loop() {
   if(isIMUReady() && isBMPReady()){  
     //if (!isLaunched && (timeNow - getStartTime()) >= 10.0f) {
     //if(!isLaunched && bmp.temperature >= 28.0f){
-    bool accelerationConditions = (getRelAccelZ() >= LIFTOFF_GS && timeSinceLaunchAccelCondMet >= 0.0f && (timeNow - timeSinceLaunchAccelCondMet) >= 0.25f);
+    bool accelerationConditions = (getRelAccelZ() >= LIFTOFF_GS && timeSinceLaunchAccelCondMet >= 0.0f && (timeNow - timeSinceLaunchAccelCondMet) >= 0.25f) || timeNow - getStartTime() > 10.0f;
     if(!isLaunched && accelerationConditions){
       Serial.println(F("Liftoff!"));
       setLaunchTime(timeNow);
@@ -107,18 +107,21 @@ void loop() {
     }
   }
 
-  // Pre-Launch Data collection - keep about 30 seconds of flight data stored before the launch
+  // Pre-Launch Data collection -  record to SD During Launch
   if(!isLaunched && !isFramDumped() && getFramNextLoc() > 0){
+    framDumpToSD();
+    resetDumpStatus();
+  }else if(isLaunched && isFramDumped() && getFramNextLoc() > 0){
     framDumpToSD();
   }
 
   // Start a new row in our CSV
-  if(!isFramDumped()){
+  if(!isFramDumped() || isLaunched){
     startRow(timeNow);
   }
 
   // Data Output to our CSV
-  if(!isFramDumped()){
+  if(!isFramDumped() || isLaunched){
     // Get BMP Data
     outputBMP();
   
@@ -126,7 +129,7 @@ void loop() {
     outputIMU();
   
     // Get GPS Data
-    outputGPS();
+    //outputGPS();
   }
 
   // Actuation Test - open flaps when temp is greater than 50 C
@@ -154,7 +157,7 @@ void loop() {
   // Actuate flaps as needed (send data to teensy)
   rotateFlaps();
   
-  if(!isFramDumped()){
+  if(!isFramDumped() || isLaunched){
     // Output our current actuation
     outputActuation();
 
@@ -165,7 +168,8 @@ void loop() {
   // Post Launch Condition - Dump FRAM to SD Card
   //if(!isFramDumped() && isLaunched && (timeNow - getLaunchTime() >= 100.0f)){ // record 100 seconds at launch
   // Dump if Fram isn't dumped and either the capacity is > 90% or descending
-  if(!isFramDumped() && (getCapacity() || getRelAccelZ <= 0))
+  if(!isFramDumped() && isLaunched && (getCapacity() > 0.9f || timeNow - getLaunchTime() > 10.0f)) {
     framDumpToSD();
+    Serial.println("Dumped!");
   }
 }

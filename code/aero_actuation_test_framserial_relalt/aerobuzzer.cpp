@@ -7,7 +7,7 @@ void soundBuzz(int totalBeeps){
   buzz.begin(BUZZER_PIN);
 
   for(int i = 0; i < totalBeeps; i++){
-    buzz.sound(NOTE_G3, 250);
+    buzz.sound(NOTE_C0, 250);
     delay(100);
   }
   

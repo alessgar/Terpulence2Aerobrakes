@@ -12,6 +12,7 @@ extern Adafruit_FRAM_SPI fram;
 extern uint32_t framNextLoc;                                // Next open FRAM location for writing
 
 void framPrintln();                                         // Add a newline to the file in FRAM
+float getCapacity();                                        // % of storage used in FRAM
 
 // Write string and newline to FRAM
 template< typename T > void framPrintln( T data ){
@@ -46,6 +47,7 @@ bool isFramReady();                                         // Returns whether t
 bool isFramDumped();                                        // Returns whether the FRAM has been dumped
 int getFramNextLoc();                                       // Returns the next free memory location in FRAM
 bool setupFram();                                           // Initializes the FRAM
+void resetDumpStatus();                                     // Resets FRAM Dump Status
 
 void insertBlankValues(int numValues);                      // Adds the specified number of blank values to the CSV row. Argument is # of blank values to insert
 #endif
