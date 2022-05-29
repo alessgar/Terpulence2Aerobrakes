@@ -102,10 +102,6 @@ void outputIMU(){
       insertBlankValues(1);
       framPrint(accel.acceleration.z);
 
-      // Estimated Velocity
-      insertBlankValues(1);
-      framPrint(0.0);
-
       insertBlankValues(1);
       framPrint((gyro.gyro.x - startingGyroX) * (180/PI));
 
@@ -153,7 +149,8 @@ float getRelAccelX(){
         sensors_event_t mag;
         sensors_event_t temp;
         if(icm.getEvent(&accel, &gyro, &temp, &mag)){        
-            return startingAccelX - accel.acceleration.x;
+            //return startingAccelX - accel.acceleration.x;
+            return accel.acceleration.x;
         } else {
             Serial.println(F("Failed to get IMU Reading!"));
         }
@@ -170,7 +167,8 @@ float getRelAccelY(){
         sensors_event_t mag;
         sensors_event_t temp;
         if(icm.getEvent(&accel, &gyro, &temp, &mag)){        
-            return startingAccelY - accel.acceleration.y;
+            //return startingAccelY - accel.acceleration.y;
+            return accel.acceleration.y;
         } else {
             Serial.println(F("Failed to get IMU Reading!"));
         }
@@ -187,7 +185,8 @@ float getRelAccelZ(){
         sensors_event_t mag;
         sensors_event_t temp;
         if(icm.getEvent(&accel, &gyro, &temp, &mag)){        
-            return startingAccelZ - accel.acceleration.z;
+            //return startingAccelZ - accel.acceleration.z;
+            return accel.acceleration.z;
         } else {
             Serial.println(F("Failed to get IMU Reading!"));
         }

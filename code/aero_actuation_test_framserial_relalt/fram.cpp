@@ -98,7 +98,7 @@ bool setupFram(){
         Serial.println(F("FRAM Ready"));
         framReady = true;
 
-        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Alt,BMP RelAlt,Est. Height,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,Est. Velocity,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,Pitch,Yaw,Roll,Tilt,Desired Actuation"));
+        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Alt,BMP RelAlt,Est. Height,Est. Velocity,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,Pitch,Yaw,Roll,Tilt,Desired Actuation"));
     }else{
         Serial.println(F("FRAM not found"));
        

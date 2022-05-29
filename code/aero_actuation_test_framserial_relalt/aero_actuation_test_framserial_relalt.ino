@@ -6,8 +6,9 @@
 #include "aero_gps.h"
 #include "aero_bmp.h"
 #include "aero_imu.h"
+#include "state_estimator.h"
+#include "controller.h"
 
-// Constants
 #define LIFTOFF_GS 4.0f
 #define LIFTOFF_HEIGHT 15.24f
 #define ACTUATION_HEIGHT 304.8f
@@ -124,7 +125,11 @@ void loop() {
   if(!isFramDumped() || isLaunched){
     // Get BMP Data
     outputBMP();
-  
+    
+    //write EKF estimates to FRAM
+    updateState();
+    outputStateEstimates();
+    
     // Get IMU Data
     outputIMU();
   

@@ -5,7 +5,7 @@
 #include <Adafruit_Sensor.h>
 #include "fram.h"
 
-#define SEALEVELPRESSURE_HPA (1018.287) // The pressure level of the area, used to get altitude but wont affect relative alt.
+#define SEALEVELPRESSURE_HPA (1005.757) // The pressure level of the area, used to get altitude but wont affect relative alt.
 
 bool setupBMP();              // Initialize the sensor
 void calibrateBMP();          // Calibrate our relative altitude

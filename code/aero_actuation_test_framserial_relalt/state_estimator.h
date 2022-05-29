@@ -7,4 +7,5 @@ float getTilt();
 float getHeight();
 float getVelocity();
 
+void outputStateEstimates();
 #endif

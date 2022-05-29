@@ -43,10 +43,7 @@ void outputBMP(){
 
       insertBlankValues(1);
       framPrint(bmp.readAltitude(SEALEVELPRESSURE_HPA) - startingHeight);
-
-      // Estimated Height
-      insertBlankValues(1);
-      framPrint(0.0);
+      
     } else {
       insertBlankValues(3);
     }

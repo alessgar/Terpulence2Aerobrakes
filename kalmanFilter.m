@@ -1,5 +1,5 @@
 % constants
-
+%addpath(genpath(cd))
 close all
 clearvars
 
@@ -43,6 +43,7 @@ P0 = [ 0.1  0   0
         0    0   1]*1e-2; 
 
 load('SRAD.mat')
+%SRAD=SRAD_Flight_4_2_22;
 SRADdata = SRAD{2}; %[time,height,velocity,Gyro_(x,y,z),Acc_(x,y,z)]
 timeSRAD = SRADdata(:,1)-SRADdata(1,1);
 heightSRAD = SRADdata(:,2);
@@ -55,6 +56,7 @@ lim = 2500;
 load('Telemega.mat');
 t = Telemega{1:lim,1} - Telemega{1,1}; %considering only ascent
 h = Telemega{1:lim,3};
+%h = interp1(timeSRAD,heightSRAD,t);
 v = Telemega{1:lim,4};
 a_x = Telemega{1:lim,5};
 theta = Telemega{1:lim,14};
@@ -70,8 +72,6 @@ theta = Telemega{1:lim,14};
 %%
 measurements(1,:) = h;
 measurements(2,:) = -a_x;
-measurements(3,:) = theta;
-
 %measurements(1,:) = heightSRAD;
 %measurements(2,:) = -acc_xSRAD;
 %measurements(3,:) = zeros(1,length(timeSRAD));
@@ -173,7 +173,7 @@ function [x_k, P_k] = runKalmanFilter(F_k,G_k,H_k,Q,R,sensorReadings,previousSta
     F_k(1,3) = F_k(1,3)*(cos(theta_k) + sin(theta_k));
     F_k(1,2) = F_k(1,2)*cos(theta_k);
     %"input" from IMU for process prediction
-    u_k = acc_k - g*cos(theta_k);
+    u_k = -acc_k - g*cos(theta_k);
     
     %prediction step (prior)
     xk_minus = F_k*previousState + G_k*u_k;
