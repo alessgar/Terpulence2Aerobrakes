@@ -127,7 +127,7 @@ void loop() {
     outputBMP();
     
     //write EKF estimates to FRAM
-    updateState();
+    updateState(timeNow);
     outputStateEstimates();
     
     // Get IMU Data
