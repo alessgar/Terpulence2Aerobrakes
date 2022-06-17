@@ -21,7 +21,7 @@ void rotateFlaps();                     // Output our desired actuation to the t
 void SERCOM2_Handler();                 // Handler for Teensy Serial
 
 bool getHasActuated();                  // Return whether we have actuated
-bool getDesiredActuation();             // Returns our desired actuation
+float getDesiredActuation();             // Returns our desired actuation
 bool getIsActuating();                  // Returns whether we are currently actuating
 void setHasActuated(bool input);        // Sets the state of whether we have actuated
 void setDesiredActuation(float input);  // Sets our desired actuation

@@ -33,7 +33,7 @@ void framDumpToSD(){
       //soundBuzz(1);
   }else{
     if(getLaunchTime() > getStartTime()){
-      soundBuzz(3);
+      soundBuzz(2);
     }
   }
 
@@ -98,7 +98,7 @@ bool setupFram(){
         //Serial.println(F("FRAM Ready"));
         framReady = true;
 
-        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,BMP Alt,BMP RelAlt,Est. Height,Est. Velocity,IMU Acceleration X,IMU Acceleration Y,IMU Acceleration Z,IMU Gyro X,IMU Gyro Y,IMU Gyro Z,Pitch,Yaw,Roll,Tilt,Desired Actuation"));
+        framPrintln(F("Program Uptime,Time Since Launch,Time Since Last Actuation,Barometer,Altitude,Filtered Height,Filtered Velocity,Accel X,Accel Y,Accel Z,Gyro X,Gyro Y,Gyro Z,Roll,Pitch,Heading,Tilt,Desired Actuation"));
     }else{
         //Serial.println(F("FRAM not found"));
        

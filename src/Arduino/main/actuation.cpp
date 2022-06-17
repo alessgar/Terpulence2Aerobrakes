@@ -27,7 +27,7 @@ bool getHasActuated(){
 }
 
 // Returns our desired actuation
-bool getDesiredActuation(){
+float getDesiredActuation(){
     return desiredActuation;
 }
 
