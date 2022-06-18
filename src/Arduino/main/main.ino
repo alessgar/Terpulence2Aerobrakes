@@ -140,9 +140,9 @@ void loop() {
   if (isBMPReady() && isIMUReady() && isLaunched) {
     //if (!getIsActuating() && timeNow - getStartTime() >= 20.0f) {
     //if (!getIsActuating() && getRelAltitude() > ACTUATION_HEIGHT && getRelAltitude() < DESIRED_APOGEE && !isFramDumped()){
-    if (simHeight > ACTUATION_HEIGHT && simHeight < DESIRED_APOGEE && !isFramDumped()){ //!getIsActuating() &&
-      //brakeDeflection = calcDeflection(timeNow, lastTimeNow);
+    if (simHeight > ACTUATION_HEIGHT && simHeight < DESIRED_APOGEE && !isFramDumped() && returnTilt()<30.0F){ //!getIsActuating() &&
       
+      //brakeDeflection = calcDeflection(timeNow, lastTimeNow);
       brakeDeflection = calcDeflection(simTime, lastTimeNow-startTime-5.0f);
       setDesiredActuation(brakeDeflection);
       
