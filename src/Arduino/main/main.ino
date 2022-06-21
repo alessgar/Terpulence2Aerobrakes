@@ -84,9 +84,11 @@ void loop() {
   lastTimeNow = timeNow;
   timeNow = millis() / (1000.0f);
 
-  float simTime = timeNow-startTime;
+  float simTime = timeNow-startTime;//-600;
+  float deltasimTime=timeNow-lastTimeNow;
   float simHeight = sim_Height(simTime);
   float simAccel = sim_Accel();
+  Serial.println(simHeight*3.28);
   
   // Buzz every 10 seconds before launching
   if(!isLaunched && (timeNow - lastBuzz >= 10.0f)){
@@ -143,7 +145,7 @@ void loop() {
     if (simHeight > ACTUATION_HEIGHT && simHeight < DESIRED_APOGEE && !isFramDumped() && returnTilt()<30.0F){ //!getIsActuating() &&
       
       //brakeDeflection = calcDeflection(timeNow, lastTimeNow);
-      brakeDeflection = calcDeflection(simTime, lastTimeNow-startTime-5.0f);
+      brakeDeflection = calcDeflection(simTime, simTime-deltasimTime);
       setDesiredActuation(brakeDeflection);
       
       setIsActuating(true);
@@ -157,7 +159,7 @@ void loop() {
     
     //if(getRelAltitude()>DESIRED_APOGEE && !isFramDumped()){  // 20 second total delay before closing, if it hasn't closed till now
     if(simHeight>DESIRED_APOGEE && !isFramDumped()){
-        setDesiredActuation(80.0f);
+        setDesiredActuation(83.0f);
     }
 
   // Actuate flaps as needed (send data to teensy)
