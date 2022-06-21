@@ -19,9 +19,9 @@ float calcDeflection(float timeNow, float lastTimeNow){
     //get the state feedback
     //currentHeight = getHeight(); //from EKF
     currentVelocity = getVelocity(); //from EKF
+    currentTilt = returnTilt()*PI/180.0F;
     
     deltaTime = timeNow - lastTimeNow;
-    currentTilt = returnTilt()*PI/180.0F;
     heightError = (DESIRED_APOGEE - currentHeight)/cos(currentTilt);
     integralError = integralError + heightError*deltaTime; //(timeNow-lastTimeNow)
     controlInput = Kp*heightError + Ki*integralError;

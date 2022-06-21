@@ -14,11 +14,14 @@
 
 float timeNow = 0.0f;                   // Used to hold current time
 float lastTimeNow = 0.0f;               // Used for delta time
-bool isLaunched = false;                // Used for launch triggers;
+float lastBuzz = 0.0f;                  // Used during pre-launch
 
-float timeSinceLaunchAccelCondMet = -1.0f;     // used for launch condition
+bool isLaunched = false;                // Used for launch triggers
+bool launchConditions = false;          // condition checks for launch
 
-float lastBuzz = 0.0f;
+float finalTilt = 0.0f;       //used to fix tilt measured after burnout
+bool tiltSet = false;         //keep track of whether finalTilt is set or not
+
 float brakeDeflection = 0.0f;
 
 // Holds initialization state of sensor
@@ -34,49 +37,35 @@ void setup() {
   int failCode = 0; // Fail counter for beep at end
 
   // Setup BMP Sensor
-  if(!setupBMP()){
-    if(!failCode){
+  if(!setupBMP() && !failCode){
       failCode = 1;
     }
-  }
 
   // Setup IMU Sensor
-  if(!setupIMU()){
-    if(!failCode){
+  if(!setupIMU() && !failCode){
       failCode = 2;
     }
-  }
 
   // Setup GPS
-  if(!setupGPS()){
-    if(!failCode){
+  if(!setupGPS() && !failCode){
       failCode = 3;
     }
-  }
 
   // Setup FRAM Module
-  if(!setupFram()){
-    if(!failCode){
+  if(!setupFram() && !failCode){
       failCode = 4;
     }
-  }
 
   // Setup SD Card and log file
-  if (!setupSDCard()) {
-    if(!failCode){
+  if (!setupSDCard() && !failCode) {
       failCode = 5;
     }
-  }
-
-  // Get first reading
-  //Serial.println(F("Initalization complete! Beginning feedback loop..."));
-  //Serial.println(F("Serial console here on out will only be utilized when actuation conditions are met"));
-  soundBuzz(failCode + 1);
+  
   timeNow = millis() / (1000.0f);
   setStartTime(timeNow);
+
+  soundBuzz(failCode + 1);
   lastBuzz = timeNow;
-  
-  //Serial.print("Event Log:\n");
 }
 
 void loop() {
@@ -96,10 +85,10 @@ void loop() {
     soundBuzz(1);
   }
 
-  // Pre-Launch Data collection -  record to SD During Launch
-  if(!isLaunched && !isFramDumped() && getFramNextLoc() > 0){
+  // Writing to fRAM and then right away to SD Card
+  if(!isLaunched && !isFramDumped() && getFramNextLoc() > 0){     //writing to SD card before launch
     framDumpToSD(); resetDumpStatus();
-  }else if(isLaunched && isFramDumped() && getFramNextLoc() > 0){
+  }else if(isLaunched && isFramDumped() && getFramNextLoc() > 0){ //writing to SD card during descent
     framDumpToSD();
   }
 
@@ -109,58 +98,54 @@ void loop() {
   }
 
   // Check for Launch
-  if(isIMUReady() && isBMPReady()){  
+  if(!isLaunched){  
     //real flight
-    //bool accelerationConditions = (abs(getRelAccelY()) > LIFTOFF_GS && (getRelAltitude() > LIFTOFF_HEIGHT));
+    //launchConditions = (abs(getRelAccelY()) > LIFTOFF_GS && (getRelAltitude() > LIFTOFF_HEIGHT));
     
     //simulated flight
-    bool accelerationConditions = (simHeight > LIFTOFF_HEIGHT) && (abs(simAccel) > LIFTOFF_GS);
-
-    //Serial.print(simTime); Serial.print(" ");
-    //Serial.print(simHeight); Serial.print(" ");
-    //Serial.print(simAccel); Serial.print(" ");
-    //Serial.print(accelerationConditions); Serial.print(" ");
-    //Serial.println(getDesiredActuation());
+    launchConditions = (simHeight > LIFTOFF_HEIGHT) && (abs(simAccel) > LIFTOFF_GS);
     
-    if(!isLaunched && accelerationConditions){
+    if(launchConditions){
       setLaunchTime(timeNow);
       isLaunched = true;
-    }//else if(!isLaunched && abs(getRelAccelY()) > LIFTOFF_GS && timeSinceLaunchAccelCondMet <= 0.0f){
-      else if(!isLaunched && abs(simAccel) > LIFTOFF_GS && timeSinceLaunchAccelCondMet <= 0.0f){
-      timeSinceLaunchAccelCondMet = timeNow;
-    }//else if(!isLaunched && abs(getRelAccelY()) < LIFTOFF_GS){
-    else if(!isLaunched && abs(simAccel) < LIFTOFF_GS){
-      timeSinceLaunchAccelCondMet = -1.0f;
     }
   }
 
+   //Serial.print(simTime); Serial.print(" ");
+   //Serial.print(simHeight); Serial.print(" ");
+   //Serial.print(simAccel); Serial.print(" ");
+   //Serial.print(accelerationConditions); Serial.print(" ");
+   //Serial.println(getDesiredActuation());
+    
   //keep updating the state every iteration 
-  computeOrientation();
   //updateState(timeNow, lastTimeNow); //EKF
+  computeOrientation();
+
+  //Compute the tilt of rocket after burnout
+  if(!tiltSet && (timeNow - getLaunchTime() > TILT_SET_TIME)) {
+    finalTilt = returnTilt();
+    tiltSet = true;
+  }
   
   // computing deflection angle and sending to Teensy
-  if (isBMPReady() && isIMUReady() && isLaunched) {
-    //if (!getIsActuating() && timeNow - getStartTime() >= 20.0f) {
-    //if (!getIsActuating() && getRelAltitude() > ACTUATION_HEIGHT && getRelAltitude() < DESIRED_APOGEE && !isFramDumped()){
-    if (simHeight > ACTUATION_HEIGHT && simHeight < DESIRED_APOGEE && !isFramDumped() && returnTilt()<30.0F){ //!getIsActuating() &&
+  if (isLaunched && !isFramDumped()) {
+    //if (getRelAltitude() > ACTUATION_HEIGHT && getRelAltitude() < DESIRED_APOGEE && finalTilt < MAX_TILT){
+    if (simHeight > ACTUATION_HEIGHT && simHeight < DESIRED_APOGEE && finalTilt < MAX_TILT) {
       
       //brakeDeflection = calcDeflection(timeNow, lastTimeNow);
       brakeDeflection = calcDeflection(simTime, simTime-deltasimTime);
-      setDesiredActuation(brakeDeflection);
       
+      setDesiredActuation(brakeDeflection);
       setIsActuating(true);
       setLastActuated(timeNow);    
     }
-    //else{
-    //  setDesiredActuation(0.0f);
-    //  setIsActuating(false);   
-    //}
-    }
-    
-    //if(getRelAltitude()>DESIRED_APOGEE && !isFramDumped()){  // 20 second total delay before closing, if it hasn't closed till now
-    if(simHeight>DESIRED_APOGEE && !isFramDumped()){
-        setDesiredActuation(83.0f);
-    }
+  }
+
+  //Deflect to the max if its past apogee  
+  //if(getRelAltitude()>DESIRED_APOGEE && !isFramDumped()){
+  if(simHeight>DESIRED_APOGEE && !isFramDumped()){
+     setDesiredActuation(83.0f);
+  }
 
   // Actuate flaps as needed (send data to teensy)
   rotateFlaps();
@@ -184,8 +169,7 @@ void loop() {
     
     setDesiredActuation(0.0f);
     rotateFlaps();
-
+    
     framDumpToSD();
-    //Serial.println("Dumped!");
   }
 }
