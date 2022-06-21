@@ -7,8 +7,8 @@
 #define FLIGHT_TIME 30.0f //seconds
 
 //Controller gains
-#define Kp 1e-3
-#define Ki 1e-6 //1e-6
+#define Kp 0.15e-3
+#define Ki 3.3e-6 //1e-6
 
 //lift-off paramters
 #define LIFTOFF_GS 30.0f // m/s^2 accelerometer data
