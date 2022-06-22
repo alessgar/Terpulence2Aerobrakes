@@ -106,7 +106,12 @@ void loop() {
 
   //Compute the tilt of rocket after burnout
   if(!tiltSet && (timeNow - getLaunchTime() > TILT_SET_TIME)) {
+    if(returnTilt()>15.0f){
+      finalTilt=15.0f;
+    }
+    else{
     finalTilt = returnTilt();
+    }
     tiltSet = true;
   }
 
@@ -130,7 +135,9 @@ void loop() {
   }
 
   // Actuate flaps as needed (send data to teensy)
+  if(isLaunched){
   rotateFlaps();
+  }
 
   // Writing to fRAM
   if(!isFramDumped() || isLaunched){

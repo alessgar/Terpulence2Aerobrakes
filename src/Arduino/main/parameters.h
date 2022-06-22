@@ -2,14 +2,14 @@
 #define PARAMETERS
 
 //Desired flight profile
-#define DESIRED_APOGEE 2900.0f //9500ft
+#define DESIRED_APOGEE 3048.0f //10000ft
 #define ACTUATION_HEIGHT 2150.0f //7000ft
-#define FLIGHT_TIME 30.0f //seconds //Time from launch to apogee to descent 
+#define FLIGHT_TIME 35.0f //seconds //Time from launch to apogee to descent 
                                     //also used for timing the fRAM dump 
 
 //Safety parameters
-#define TILT_SET_TIME 2.8f //seconds
-#define MAX_TILT 30.0f //in degrees
+#define TILT_SET_TIME 2.0f //seconds
+#define MAX_TILT 30.0f //in degrees  Right now this is overridden and the flaps will always actuate and caps the final tilt at 15d
 
 //Controller gains
 //#define Kp 0.12e-3
