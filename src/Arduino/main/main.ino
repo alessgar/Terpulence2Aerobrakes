@@ -77,7 +77,7 @@ void loop() {
   float deltasimTime=timeNow-lastTimeNow;
   float simHeight = sim_Height(simTime);
   float simAccel = sim_Accel();
-  Serial.println(simHeight*3.28);
+  //Serial.println(simHeight*3.28);
   
   // Buzz every 10 seconds before launching
   if(!isLaunched && (timeNow - lastBuzz >= 10.0f)){
@@ -111,8 +111,9 @@ void loop() {
     }
   }
 
-   //Serial.print(simTime); Serial.print(" ");
-   //Serial.print(simHeight); Serial.print(" ");
+   Serial.print(simTime); Serial.print("= simTime, ");
+   Serial.print(simTime-getLaunchTime()); Serial.print("= timesincelaunch, ");
+   Serial.print(simHeight); Serial.print(" = simHeight");
    //Serial.print(simAccel); Serial.print(" ");
    //Serial.print(accelerationConditions); Serial.print(" ");
    //Serial.println(getDesiredActuation());
@@ -122,10 +123,16 @@ void loop() {
   computeOrientation();
 
   //Compute the tilt of rocket after burnout
-  if(!tiltSet && (timeNow - getLaunchTime() > TILT_SET_TIME)) {
+  //if(!tiltSet && (timeNow - getLaunchTime() > TILT_SET_TIME)) {
+  if(!tiltSet && (simTime - getLaunchTime() > TILT_SET_TIME)) {
     finalTilt = returnTilt();
     tiltSet = true;
   }
+  
+  Serial.print(finalTilt); Serial.print("= finalTilt; ");
+  Serial.print(returnTilt()); Serial.println("= currentTilt; ");
+
+
   
   // computing deflection angle and sending to Teensy
   if (isLaunched && !isFramDumped()) {

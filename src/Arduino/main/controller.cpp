@@ -26,7 +26,7 @@ float calcDeflection(float timeNow, float lastTimeNow){
     integralError = integralError + heightError*deltaTime; //(timeNow-lastTimeNow)
     controlInput = Kp*heightError + Ki*integralError;
 
-    //Serial.print(currentTilt); Serial.print(" ");
+    
     //Serial.println(controlInput);
 
     //controller clipping

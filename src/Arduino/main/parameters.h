@@ -23,7 +23,7 @@
 #define LIFTOFF_HEIGHT 10.0f //meters
 
 //sensor parameters
-#define IMU_CALLIBRATION_TIME 10.0f //seconds
+#define IMU_CALLIBRATION_TIME 20.0f //seconds
 #define IMU_CALLIBRATION_SAMPLES 50 //KEEP THIS AT 50!!!
 
 #endif

@@ -31,11 +31,11 @@ void framDumpToSD(){
       }
       
       //soundBuzz(1);
-  }else{
-    if(getLaunchTime() > getStartTime()){
-      soundBuzz(2);
-    }
-  }
+  }//else{
+    //if(getLaunchTime() > getStartTime()){
+      //soundBuzz(2);
+    //}
+  //}
 
   framNextLoc = 0;
   isFRAMDumped = true;
