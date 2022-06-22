@@ -8,6 +8,6 @@
 #include "sim_variables.h"
 #include "parameters.h"
 
-float calcDeflection(float, float); //time and previousTime
+float calcDeflection(float, float, float); //time and previousTime
 
 #endif

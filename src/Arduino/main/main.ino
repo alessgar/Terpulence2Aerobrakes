@@ -28,10 +28,8 @@ float brakeDeflection = 0.0f;
 bool icmReady = false;
 
 void setup() {
-  Serial.begin(115200);
-  //while (!Serial);
-  //Serial.println(F("Starting Actuation Test Program!"));
-
+  //Serial.begin(115200);
+ 
   setupTeensySerial();
 
   int failCode = 0; // Fail counter for beep at end
@@ -72,12 +70,6 @@ void loop() {
   //Getting timestamps
   lastTimeNow = timeNow;
   timeNow = millis() / (1000.0f);
-
-  float simTime = timeNow-startTime;//-600;
-  float deltasimTime=timeNow-lastTimeNow;
-  float simHeight = sim_Height(simTime);
-  float simAccel = sim_Accel();
-  //Serial.println(simHeight*3.28);
   
   // Buzz every 10 seconds before launching
   if(!isLaunched && (timeNow - lastBuzz >= 10.0f)){
@@ -100,47 +92,31 @@ void loop() {
   // Check for Launch
   if(!isLaunched){  
     //real flight
-    //launchConditions = (abs(getRelAccelY()) > LIFTOFF_GS && (getRelAltitude() > LIFTOFF_HEIGHT));
-    
-    //simulated flight
-    launchConditions = (simHeight > LIFTOFF_HEIGHT) && (abs(simAccel) > LIFTOFF_GS);
+    launchConditions = (abs(getRelAccelY()) > LIFTOFF_GS && (getRelAltitude() > LIFTOFF_HEIGHT));
     
     if(launchConditions){
       setLaunchTime(timeNow);
       isLaunched = true;
     }
   }
-
-   Serial.print(simTime); Serial.print("= simTime, ");
-   Serial.print(simTime-getLaunchTime()); Serial.print("= timesincelaunch, ");
-   Serial.print(simHeight); Serial.print(" = simHeight");
-   //Serial.print(simAccel); Serial.print(" ");
-   //Serial.print(accelerationConditions); Serial.print(" ");
-   //Serial.println(getDesiredActuation());
     
   //keep updating the state every iteration 
   //updateState(timeNow, lastTimeNow); //EKF
   computeOrientation();
 
   //Compute the tilt of rocket after burnout
-  //if(!tiltSet && (timeNow - getLaunchTime() > TILT_SET_TIME)) {
-  if(!tiltSet && (simTime - getLaunchTime() > TILT_SET_TIME)) {
+  if(!tiltSet && (timeNow - getLaunchTime() > TILT_SET_TIME)) {
     finalTilt = returnTilt();
     tiltSet = true;
   }
-  
-  Serial.print(finalTilt); Serial.print("= finalTilt; ");
-  Serial.print(returnTilt()); Serial.println("= currentTilt; ");
-
 
   
   // computing deflection angle and sending to Teensy
   if (isLaunched && !isFramDumped()) {
-    //if (getRelAltitude() > ACTUATION_HEIGHT && getRelAltitude() < DESIRED_APOGEE && finalTilt < MAX_TILT){
-    if (simHeight > ACTUATION_HEIGHT && simHeight < DESIRED_APOGEE && finalTilt < MAX_TILT) {
-      
-      //brakeDeflection = calcDeflection(timeNow, lastTimeNow);
-      brakeDeflection = calcDeflection(simTime, simTime-deltasimTime);
+    if (getRelAltitude() > ACTUATION_HEIGHT && getRelAltitude() < DESIRED_APOGEE && finalTilt < MAX_TILT){
+    
+      //real Flight
+      brakeDeflection = calcDeflection(timeNow, lastTimeNow, finalTilt);
       
       setDesiredActuation(brakeDeflection);
       setIsActuating(true);
@@ -149,8 +125,7 @@ void loop() {
   }
 
   //Deflect to the max if its past apogee  
-  //if(getRelAltitude()>DESIRED_APOGEE && !isFramDumped()){
-  if(simHeight>DESIRED_APOGEE && !isFramDumped()){
+  if(getRelAltitude()>DESIRED_APOGEE && !isFramDumped()){
      setDesiredActuation(83.0f);
   }
 
@@ -170,7 +145,6 @@ void loop() {
   }
 
   // Post Launch Condition - Dump FRAM to SD Card
-  //if(!isFramDumped() && isLaunched && (timeNow - getLaunchTime() >= 100.0f)){ // record 100 seconds at launch
   // Dump if Fram isn't dumped and either the capacity is > 90% or descending
   if(!isFramDumped() && isLaunched && (getCapacity() > 0.9f || timeNow - getLaunchTime() > FLIGHT_TIME)) {
     

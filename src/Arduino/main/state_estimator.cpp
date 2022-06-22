@@ -62,28 +62,6 @@ void updateState(float timeNow, float previousTime){
   //theta_k =0.0f; //in rad
   theta_k = returnTilt()*PI/180.0F;
 
-  //Sim data
-  height_k = (float) sim_Height(timeNow);
-  acc_k =    (float) sim_Accel();
-
-/*  
-//if timeNow if in input sim otherwise get height and accel
-if (timeNow>10.0f) {
-   height_k = (float) simulateHeight(timeNow-10.0f);  
-   acc_k = (float) simulateAccel(timeNow-10.0f);
-} else if (timeNow>30.0f) {
-   height_k = 2400.0f;  
-   acc_k =0;
-   } else {
-     height_k = 0.0f;  
-   acc_k =-9.81f;
-} */
-  
-      //insertBlankValues(1);
-      //framPrint(height_k);
-
-      //insertBlankValues(1);
-      //framPrint(acc_k);
       
 // Create system matricies
    F_k = 
@@ -144,49 +122,3 @@ void outputStateEstimates(){
       insertBlankValues(1);
       framPrint(getVelocity());
 }
-
-
-/*
-float simulateHeight(float timeNow) {
-  // Test code to get height as a function of timeNow
-float h;
-
-  h=-5.712028063268500e-18*pow(timeNow,20) +1.58638919134085e-15*pow(timeNow,19)  +-2.03963339274347e-13*pow(timeNow,18)   +1.61097279401726e-11*pow(timeNow,17)  -8.74654469840995e-10*pow(timeNow,16)
-  +3.46070057741233e-08*pow(timeNow,15)  -1.03211061692725e-06*pow(timeNow,14) +2.36677401044779e-05*pow(timeNow,13)    -0.000421810515211216*pow(timeNow,12)   +0.00586438366049921*pow(timeNow,11)
-  -0.0634379304342509*pow(timeNow,10)    +0.529037766547874*pow(timeNow,9)      -3.34250566958262*pow(timeNow,8)        +15.5422950299675*pow(timeNow,7)         -50.7101186367172*pow(timeNow,6)
-  +106.864381898660*pow(timeNow,5)       -123.313329687538*pow(timeNow,4)      +45.3049941055702*pow(timeNow,3)         +53.4638033298709*pow(timeNow,2)        +4.11040674672448*pow(timeNow,1)
-  -0.417857259296764; 
-h=
-  -1.03211061692725e-06*pow(timeNow,14) +2.36677401044779e-05*pow(timeNow,13)    -0.000421810515211216*pow(timeNow,12)   +0.00586438366049921*pow(timeNow,11)
-  -0.0634379304342509*pow(timeNow,10)    +0.529037766547874*pow(timeNow,9)      -3.34250566958262*pow(timeNow,8)        +15.5422950299675*pow(timeNow,7)         -50.7101186367172*pow(timeNow,6)
-  +106.864381898660*pow(timeNow,5)       -123.313329687538*pow(timeNow,4)      +45.3049941055702*pow(timeNow,3)         +53.4638033298709*pow(timeNow,2)        +4.11040674672448*pow(timeNow,1)
-  -0.417857259296764;  
-
-h = 0.5f*30.0005f*pow(timeNow,2);  
-
-return h;
-}
-
-float simulateAccel(float timeNow) {
-  // Test code to get accel as a function of timeNow
-float a;
-
-
-a=1.17566104537301e-16*pow(timeNow,20) -1.97662506733408e-14*pow(timeNow,19)   +1.37485165115879e-12*pow(timeNow,18)    -4.49097198565159e-11*pow(timeNow,17)   +1.11439571036918e-10*pow(timeNow,16)
-  +5.50907929567516e-08*pow(timeNow,15)  -2.71500418887854e-06*pow(timeNow,14) +7.52815104986264e-05*pow(timeNow,13)    -0.00142742653043154*pow(timeNow,12)    +0.0196098570656512*pow(timeNow,11)
-  -0.198888899325335*pow(timeNow,10)    +1.48685709336237*pow(timeNow,9)       -8.03363261114509*pow(timeNow,8)         +29.9576482902292*pow(timeNow,7)        -69.1211945242324*pow(timeNow,6)
-  +64.3759633958567*pow(timeNow,5)       +106.004289556379*pow(timeNow,4)      -374.110145583987*pow(timeNow,3)         +412.600835330797*pow(timeNow,2)        -185.671454730500*pow(timeNow,1)
-  -80.6565766606938;
-
-a=
-  -2.71500418887854e-06*pow(timeNow,14) +7.52815104986264e-05*pow(timeNow,13)    -0.00142742653043154*pow(timeNow,12)    +0.0196098570656512*pow(timeNow,11)
-  -0.198888899325335*pow(timeNow,10)    +1.48685709336237*pow(timeNow,9)       -8.03363261114509*pow(timeNow,8)         +29.9576482902292*pow(timeNow,7)        -69.1211945242324*pow(timeNow,6)
-  +64.3759633958567*pow(timeNow,5)       +106.004289556379*pow(timeNow,4)      -374.110145583987*pow(timeNow,3)         +412.600835330797*pow(timeNow,2)        -185.671454730500*pow(timeNow,1)
-  -80.6565766606938; 
-   
-  a = -30.0f;
-
-  return a;
-}
-*/
-      

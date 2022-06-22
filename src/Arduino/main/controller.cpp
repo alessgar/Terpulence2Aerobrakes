@@ -12,17 +12,16 @@ float currentHeight = 0.0f;
 float currentVelocity = 0.0f;
 float currentTilt = 0.0f;
 
-float calcDeflection(float timeNow, float lastTimeNow){
+float calcDeflection(float timeNow, float lastTimeNow, float finalTilt){
 
-    currentHeight = sim_Height(timeNow); //simulated
-    //currentHeight = getRelAltitude(); //from barometer
     //get the state feedback
     //currentHeight = getHeight(); //from EKF
-    currentVelocity = getVelocity(); //from EKF
-    currentTilt = returnTilt()*PI/180.0F;
-    
+    //currentVelocity = getVelocity(); //from EKF
+    //currentTilt = returnTilt()*PI/180.0F;
+
+    currentHeight = getRelAltitude(); //from barometer
     deltaTime = timeNow - lastTimeNow;
-    heightError = (DESIRED_APOGEE - currentHeight)/cos(currentTilt);
+    heightError = (DESIRED_APOGEE - currentHeight)/cos(finalTilt*PI/180.0F);
     integralError = integralError + heightError*deltaTime; //(timeNow-lastTimeNow)
     controlInput = Kp*heightError + Ki*integralError;
 

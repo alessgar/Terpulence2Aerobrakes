@@ -12,7 +12,7 @@ bool setupGPS(){
     //GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCONLY);
     GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
     gpsready = true;
-    Serial.println(F("GPS Found and Initialized!"));
+    //Serial.println(F("GPS Found and Initialized!"));
   }else{
     return false;
     /*Serial.println(F("GPS not found!"));
