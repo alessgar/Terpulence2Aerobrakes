@@ -1,6 +1,8 @@
 
 # Terpulence II - Aerobrakes Computer
 
+**As of 8/31/2022 all progress on this repo is being worked on in the main TerpRockets git.**
+
 The Software And Sample Data for The Terpulence II Aerobrakes Computer
 
 
