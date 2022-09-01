@@ -1,7 +1,0 @@
-%determine Cd of the rocket
-m=30.4; %kg mass after burnout
-D=m*medfilt1(TerpIIFlight4TeleMega.accel_x(500:2500),20,'truncate'); %drag of the rocket using median fit to smooth data
-R = 287.05; %j/kg-K air gas constant
-rho = TerpIIFlight4TeleMega.pressure(500:2500)./R./TerpIIFlight4TeleMega.temperature(500:2500); %density
-time= TerpIIFlight4TeleMega.time(500:2500);
-speed=TerpIIFlight4TeleMega.speed(50
